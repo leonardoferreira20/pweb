@@ -1,0 +1,28 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace RESTfulAPI.Entities;
+
+// A tipologia de um alojamento (por exemplo, "Quarto Duplo" ou "Suite").
+// Cada objeto desta classe corresponde a uma linha da tabela Categorias.
+// Igual à classe da Gestão de Hotéis (Etapa 3), sem o [JsonIgnore]: na API quem vai para JSON são os DTOs.
+public class Categoria
+{
+    // Chave primária. Por se chamar Id, o EF Core reconhece-a sozinho,
+    // e é a base de dados que atribui o valor (1, 2, 3...).
+    public int Id { get; set; }
+
+    // Nome da categoria: obrigatório, até 100 caracteres.
+    [StringLength(100, ErrorMessage = "O nome tem no máximo 100 caracteres.")]
+    [Required(ErrorMessage = "O nome é obrigatório.")]
+    public string? Nome { get; set; }
+
+    // Descrição, opcional, até 200 caracteres.
+    [StringLength(200)]
+    public string? Descricao { get; set; }
+
+    // Uma categoria inativa não aparece na aplicação dos clientes.
+    public bool Ativo { get; set; } = true;
+
+    // Navegação de coleção: os alojamentos desta categoria. Não cria colunas.
+    public ICollection<Alojamento>? alojamentos { get; set; }
+}
