@@ -1,0 +1,89 @@
+@page "/alojamentos/create"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Alojamento</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Alojamento" OnValidSubmit="AddAlojamento" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome:</label> 
+                <InputText id="nome" @bind-Value="Alojamento.Nome" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Alojamento.Nome" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="descricao" class="form-label">Descricao:</label> 
+                <InputText id="descricao" @bind-Value="Alojamento.Descricao" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Alojamento.Descricao" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="capacidade" class="form-label">Capacidade:</label> 
+                <InputNumber id="capacidade" @bind-Value="Alojamento.Capacidade" class="form-control" /> 
+                <ValidationMessage For="() => Alojamento.Capacidade" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="numunidades" class="form-label">NumUnidades:</label> 
+                <InputNumber id="numunidades" @bind-Value="Alojamento.NumUnidades" class="form-control" /> 
+                <ValidationMessage For="() => Alojamento.NumUnidades" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="preconoite" class="form-label">PrecoNoite:</label> 
+                <InputNumber id="preconoite" @bind-Value="Alojamento.PrecoNoite" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Alojamento.PrecoNoite" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="urlimagem" class="form-label">UrlImagem:</label> 
+                <InputText id="urlimagem" @bind-Value="Alojamento.UrlImagem" class="form-control" /> 
+                <ValidationMessage For="() => Alojamento.UrlImagem" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ativo" class="form-label">Ativo:</label> 
+                <InputCheckbox id="ativo" @bind-Value="Alojamento.Ativo" class="form-check-input" /> 
+                <ValidationMessage For="() => Alojamento.Ativo" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="hotelid" class="form-label">HotelId:</label> 
+                <InputNumber id="hotelid" @bind-Value="Alojamento.HotelId" class="form-control" /> 
+                <ValidationMessage For="() => Alojamento.HotelId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="categoriaid" class="form-label">CategoriaId:</label> 
+                <InputNumber id="categoriaid" @bind-Value="Alojamento.CategoriaId" class="form-control" /> 
+                <ValidationMessage For="() => Alojamento.CategoriaId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="mododisponibilizacaoid" class="form-label">ModoDisponibilizacaoId:</label> 
+                <InputNumber id="mododisponibilizacaoid" @bind-Value="Alojamento.ModoDisponibilizacaoId" class="form-control" /> 
+                <ValidationMessage For="() => Alojamento.ModoDisponibilizacaoId" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/alojamentos">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Alojamento Alojamento { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddAlojamento()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Alojamentos.Add(Alojamento);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/alojamentos");
+    }
+}

@@ -1,0 +1,60 @@
+@page "/hotels/details"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Hotel</h2>
+    <hr />
+    @if (hotel is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Nome</dt>
+            <dd class="col-sm-10">@hotel.Nome</dd>
+            <dt class="col-sm-2">Tipo</dt>
+            <dd class="col-sm-10">@hotel.Tipo</dd>
+            <dt class="col-sm-2">Estrelas</dt>
+            <dd class="col-sm-10">@hotel.Estrelas</dd>
+            <dt class="col-sm-2">Descricao</dt>
+            <dd class="col-sm-10">@hotel.Descricao</dd>
+            <dt class="col-sm-2">UrlImagem</dt>
+            <dd class="col-sm-10">@hotel.UrlImagem</dd>
+            <dt class="col-sm-2">Imagem</dt>
+            <dd class="col-sm-10">@hotel.Imagem</dd>
+            <dt class="col-sm-2">Ativo</dt>
+            <dd class="col-sm-10">@hotel.Ativo</dd>
+            <dt class="col-sm-2">MoradaId</dt>
+            <dd class="col-sm-10">@hotel.MoradaId</dd>
+        </dl>
+        <div>
+            <a href="@($"/hotels/edit?id={hotel.Id}")">Edit</a> |
+            <a href="@($"/hotels")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Hotel? hotel;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        hotel = await context.Hoteis.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (hotel is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

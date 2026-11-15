@@ -1,0 +1,39 @@
+@page "/regimealimentars"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using GestaoHoteis.Entities
+@using GestaoHoteis.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="regimealimentars/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.RegimesAlimentares">
+    <PropertyColumn Property="regimealimentar => regimealimentar.Nome" />
+    <PropertyColumn Property="regimealimentar => regimealimentar.Descricao" />
+    <PropertyColumn Property="regimealimentar => regimealimentar.Percentagem" />
+    <PropertyColumn Property="regimealimentar => regimealimentar.Ativo" />
+
+    <TemplateColumn Context="regimealimentar">
+        <a href="@($"regimealimentars/edit?id={regimealimentar.Id}")">Edit</a> |
+        <a href="@($"regimealimentars/details?id={regimealimentar.Id}")">Details</a> |
+        <a href="@($"regimealimentars/delete?id={regimealimentar.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

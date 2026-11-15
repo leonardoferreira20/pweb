@@ -1,0 +1,66 @@
+@page "/alojamentos/details"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Alojamento</h2>
+    <hr />
+    @if (alojamento is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Nome</dt>
+            <dd class="col-sm-10">@alojamento.Nome</dd>
+            <dt class="col-sm-2">Descricao</dt>
+            <dd class="col-sm-10">@alojamento.Descricao</dd>
+            <dt class="col-sm-2">Capacidade</dt>
+            <dd class="col-sm-10">@alojamento.Capacidade</dd>
+            <dt class="col-sm-2">NumUnidades</dt>
+            <dd class="col-sm-10">@alojamento.NumUnidades</dd>
+            <dt class="col-sm-2">PrecoNoite</dt>
+            <dd class="col-sm-10">@alojamento.PrecoNoite</dd>
+            <dt class="col-sm-2">UrlImagem</dt>
+            <dd class="col-sm-10">@alojamento.UrlImagem</dd>
+            <dt class="col-sm-2">Imagem</dt>
+            <dd class="col-sm-10">@alojamento.Imagem</dd>
+            <dt class="col-sm-2">Ativo</dt>
+            <dd class="col-sm-10">@alojamento.Ativo</dd>
+            <dt class="col-sm-2">HotelId</dt>
+            <dd class="col-sm-10">@alojamento.HotelId</dd>
+            <dt class="col-sm-2">CategoriaId</dt>
+            <dd class="col-sm-10">@alojamento.CategoriaId</dd>
+            <dt class="col-sm-2">ModoDisponibilizacaoId</dt>
+            <dd class="col-sm-10">@alojamento.ModoDisponibilizacaoId</dd>
+        </dl>
+        <div>
+            <a href="@($"/alojamentos/edit?id={alojamento.Id}")">Edit</a> |
+            <a href="@($"/alojamentos")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Alojamento? alojamento;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        alojamento = await context.Alojamentos.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (alojamento is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

@@ -1,15 +1,19 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
+    @* Coluna da esquerda: o menu vertical (NavMenu.razor). *@
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
+        @* Barra horizontal: o contentor (cor, altura, posição) é do layout;
+           o conteúdo (conta do utilizador e Sobre) é o componente TopBar.razor. *@
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <TopBar />
         </div>
 
+        @* Aqui aparece a página do endereço atual (Home, Sobre, Alojamentos, ...). *@
         <article class="content px-4">
             @Body
         </article>
@@ -17,7 +21,7 @@
 </div>
 
 <div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
+    Ocorreu um erro inesperado.
+    <a href="" class="reload">Recarregar</a>
     <a class="dismiss">🗙</a>
 </div>

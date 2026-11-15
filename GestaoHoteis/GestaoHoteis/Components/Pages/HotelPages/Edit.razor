@@ -1,0 +1,119 @@
+@page "/hotels/edit"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Hotel</h2>
+<hr />
+@if (Hotel is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Hotel" OnValidSubmit="UpdateHotel" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Hotel.Id" value="@Hotel.Id" />
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome:</label>
+                    <InputText id="nome" @bind-Value="Hotel.Nome" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Hotel.Nome" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="tipo" class="form-label">Tipo:</label>
+                    <InputText id="tipo" @bind-Value="Hotel.Tipo" class="form-control" />
+                    <ValidationMessage For="() => Hotel.Tipo" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="estrelas" class="form-label">Estrelas:</label>
+                    <InputNumber id="estrelas" @bind-Value="Hotel.Estrelas" class="form-control" />
+                    <ValidationMessage For="() => Hotel.Estrelas" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descricao:</label>
+                    <InputText id="descricao" @bind-Value="Hotel.Descricao" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Hotel.Descricao" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="urlimagem" class="form-label">UrlImagem:</label>
+                    <InputText id="urlimagem" @bind-Value="Hotel.UrlImagem" class="form-control" />
+                    <ValidationMessage For="() => Hotel.UrlImagem" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ativo" class="form-label">Ativo:</label>
+                    <InputCheckbox id="ativo" @bind-Value="Hotel.Ativo" class="form-check-input" />
+                    <ValidationMessage For="() => Hotel.Ativo" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="moradaid" class="form-label">MoradaId:</label>
+                    <InputNumber id="moradaid" @bind-Value="Hotel.MoradaId" class="form-control" />
+                    <ValidationMessage For="() => Hotel.MoradaId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/hotels">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Hotel? Hotel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Hotel ??= await context.Hoteis.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Hotel is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateHotel()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Hotel!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!HotelExists(Hotel!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/hotels");
+    }
+
+    private bool HotelExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Hoteis.Any(e => e.Id == id);
+    }
+}

@@ -1,0 +1,10 @@
+﻿/* Estilos da página inicial. Só se aplicam a este componente (isolamento de CSS). */
+
+/* A imagem acompanha a janela: ocupa a largura disponível, nunca fica
+   mais alta do que o espaço visível, e mantém sempre a proporção. */
+.imagem-home {
+    display: block;
+    width: 100%; /* toda a largura da zona da página */
+    max-height: calc(100vh - 7rem); /* altura da janela menos a barra horizontal e as margens */
+    object-fit: contain; /* encaixa a imagem sem a cortar nem deformar */
+}

@@ -1,0 +1,59 @@
+@page "/caracteristicas/delete"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Caracteristica</h2>
+    <hr />
+    @if (caracteristica is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Nome</dt>
+            <dd class="col-sm-10">@caracteristica.Nome</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Ativo</dt>
+            <dd class="col-sm-10">@caracteristica.Ativo</dd>
+        </dl>
+        <EditForm method="post" Model="caracteristica" OnValidSubmit="DeleteCaracteristica" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(caracteristica is null)">Delete</button> |
+            <a href="/caracteristicas">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Caracteristica? caracteristica;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        caracteristica = await context.Caracteristicas.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (caracteristica is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteCaracteristica()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Caracteristicas.Remove(caracteristica!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/caracteristicas");
+    }
+}

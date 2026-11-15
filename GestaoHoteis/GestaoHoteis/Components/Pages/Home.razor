@@ -1,7 +1,10 @@
-﻿@page "/"
+﻿@* @page "/": esta é a página da raiz do site, a que abre em https://localhost:<porta>/ *@
+@page "/"
 
-<PageTitle>Home</PageTitle>
+@* Título do separador do browser: o nome da aplicação, que vem do AppConfig (Etapa 1, alínea 3.h). *@
+<PageTitle>@AppConfig.tituloHomePage</PageTitle>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+@* A imagem está em wwwroot/img (Etapa 1, alínea 3.n). O UseStaticFiles do Program.cs
+   entrega-a em /img/myhotels.jpg: o endereço não inclui "wwwroot".
+   O tamanho vem da classe imagem-home, no Home.razor.css: acompanha o tamanho da janela. *@
+<img src="/img/myhotels.jpg" class="imagem-home" alt="@AppConfig.tituloHomePage" />

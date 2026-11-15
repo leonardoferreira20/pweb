@@ -1,0 +1,74 @@
+@page "/hotels/create"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Hotel</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Hotel" OnValidSubmit="AddHotel" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="nome" class="form-label">Nome:</label> 
+                <InputText id="nome" @bind-Value="Hotel.Nome" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Hotel.Nome" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="tipo" class="form-label">Tipo:</label> 
+                <InputText id="tipo" @bind-Value="Hotel.Tipo" class="form-control" /> 
+                <ValidationMessage For="() => Hotel.Tipo" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="estrelas" class="form-label">Estrelas:</label> 
+                <InputNumber id="estrelas" @bind-Value="Hotel.Estrelas" class="form-control" /> 
+                <ValidationMessage For="() => Hotel.Estrelas" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="descricao" class="form-label">Descricao:</label> 
+                <InputText id="descricao" @bind-Value="Hotel.Descricao" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Hotel.Descricao" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="urlimagem" class="form-label">UrlImagem:</label> 
+                <InputText id="urlimagem" @bind-Value="Hotel.UrlImagem" class="form-control" /> 
+                <ValidationMessage For="() => Hotel.UrlImagem" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="ativo" class="form-label">Ativo:</label> 
+                <InputCheckbox id="ativo" @bind-Value="Hotel.Ativo" class="form-check-input" /> 
+                <ValidationMessage For="() => Hotel.Ativo" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="moradaid" class="form-label">MoradaId:</label> 
+                <InputNumber id="moradaid" @bind-Value="Hotel.MoradaId" class="form-control" /> 
+                <ValidationMessage For="() => Hotel.MoradaId" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/hotels">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Hotel Hotel { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddHotel()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Hoteis.Add(Hotel);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/hotels");
+    }
+}

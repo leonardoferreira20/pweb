@@ -1,0 +1,104 @@
+@page "/regimealimentars/edit"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>RegimeAlimentar</h2>
+<hr />
+@if (RegimeAlimentar is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="RegimeAlimentar" OnValidSubmit="UpdateRegimeAlimentar" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="RegimeAlimentar.Id" value="@RegimeAlimentar.Id" />
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome:</label>
+                    <InputText id="nome" @bind-Value="RegimeAlimentar.Nome" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => RegimeAlimentar.Nome" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descricao:</label>
+                    <InputText id="descricao" @bind-Value="RegimeAlimentar.Descricao" class="form-control" />
+                    <ValidationMessage For="() => RegimeAlimentar.Descricao" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="percentagem" class="form-label">Percentagem:</label>
+                    <InputNumber id="percentagem" @bind-Value="RegimeAlimentar.Percentagem" class="form-control" />
+                    <ValidationMessage For="() => RegimeAlimentar.Percentagem" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ativo" class="form-label">Ativo:</label>
+                    <InputCheckbox id="ativo" @bind-Value="RegimeAlimentar.Ativo" class="form-check-input" />
+                    <ValidationMessage For="() => RegimeAlimentar.Ativo" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/regimealimentars">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private RegimeAlimentar? RegimeAlimentar { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        RegimeAlimentar ??= await context.RegimesAlimentares.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (RegimeAlimentar is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateRegimeAlimentar()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(RegimeAlimentar!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!RegimeAlimentarExists(RegimeAlimentar!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/regimealimentars");
+    }
+
+    private bool RegimeAlimentarExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.RegimesAlimentares.Any(e => e.Id == id);
+    }
+}

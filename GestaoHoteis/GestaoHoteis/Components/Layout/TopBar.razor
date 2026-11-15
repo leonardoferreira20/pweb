@@ -1,0 +1,80 @@
+﻿@* Conteúdo da barra horizontal: a conta do utilizador (Login e Registar, ou o email e o Logout)
+   e a ligação Sobre. O MainLayout usa-o com <TopBar />, dentro do <div class="top-row">.
+   Não tem @page: não é uma página, é um componente usado dentro de outro (como o NavMenu). *@
+
+@* O Blazor chama o Dispose quando o componente desaparece (ver o @code). *@
+@implements IDisposable
+
+@* Serviço que sabe o endereço da página atual; o Logout precisa dele. *@
+@inject NavigationManager NavigationManager
+
+@* AuthorizeView SEM Roles: aqui só interessa saber se há sessão iniciada,
+   seja qual for o role. Este bloco veio do NavMenu.razor do template. *@
+<AuthorizeView>
+    <Authorized>
+        @* Com sessão: o email de quem entrou (vem do cookie) e o Logout. *@
+        <div class="nav-login">
+            <NavLink class="nav-link" href="Account/Manage">
+                @context.User.Identity?.Name
+            </NavLink>
+        </div>
+        <div class="nav-login">
+            @* O Logout é um POST para Account/Logout, um endpoint do template. *@
+            <form action="Account/Logout" method="post">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <button type="submit" class="btn btn-light btn-sm border">Logout</button>
+            </form>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        @* Sem sessão: as páginas de login e de registo do template (pasta Account).
+           Os ícones são classes do TopBar.razor.css (SVG a azul-escuro). *@
+        <div class="nav-login">
+            <NavLink class="nav-link" href="Account/Login">
+                <span class="bi bi-person-fill-top-bar" aria-hidden="true"></span> Login
+            </NavLink>
+        </div>
+        <div class="nav-login">
+            <NavLink class="nav-link" href="Account/Register">
+                <span class="bi bi-person-badge-top-bar" aria-hidden="true"></span> Registar
+            </NavLink>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@* Fora do AuthorizeView: aparece sempre, com ou sem sessão. *@
+<div class="nav-login">
+    <NavLink class="nav-link" href="sobre">
+        <span class="bi bi-info-circle-top-bar" aria-hidden="true"></span> Sobre ...
+    </NavLink>
+</div>
+
+@code {
+    // Endereço da página atual. O Logout envia-o em ReturnUrl, para voltar a ela.
+    private string? currentUrl;
+
+    // Ciclo de vida: corre uma vez, quando o componente é criado, antes de ser desenhado.
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        // Evento C#: += pede ao NavigationManager que chame OnLocationChanged
+        // sempre que se muda de página (a barra não é desenhada de novo sozinha).
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    // Chamado pelo NavigationManager a cada mudança de página.
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        // O aviso não veio de um clique neste componente: é preciso pedir ao Blazor que o desenhe de novo.
+        StateHasChanged();
+    }
+
+    // Ciclo de vida: o Blazor chama-o quando o componente sai do ecrã (por causa do @implements IDisposable).
+    // -= cancela o aviso. Cada += num componente precisa de um -= aqui.
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

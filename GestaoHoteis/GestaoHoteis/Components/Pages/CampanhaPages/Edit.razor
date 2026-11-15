@@ -1,0 +1,119 @@
+@page "/campanhas/edit"
+@using Microsoft.EntityFrameworkCore
+@using GestaoHoteis.Entities
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Campanha</h2>
+<hr />
+@if (Campanha is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Campanha" OnValidSubmit="UpdateCampanha" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Campanha.Id" value="@Campanha.Id" />
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome:</label>
+                    <InputText id="nome" @bind-Value="Campanha.Nome" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Campanha.Nome" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descricao:</label>
+                    <InputText id="descricao" @bind-Value="Campanha.Descricao" class="form-control" />
+                    <ValidationMessage For="() => Campanha.Descricao" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="percentagem" class="form-label">Percentagem:</label>
+                    <InputNumber id="percentagem" @bind-Value="Campanha.Percentagem" class="form-control" />
+                    <ValidationMessage For="() => Campanha.Percentagem" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datainicio" class="form-label">DataInicio:</label>
+                    <InputDate id="datainicio" @bind-Value="Campanha.DataInicio" class="form-control" />
+                    <ValidationMessage For="() => Campanha.DataInicio" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datafim" class="form-label">DataFim:</label>
+                    <InputDate id="datafim" @bind-Value="Campanha.DataFim" class="form-control" />
+                    <ValidationMessage For="() => Campanha.DataFim" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ativo" class="form-label">Ativo:</label>
+                    <InputCheckbox id="ativo" @bind-Value="Campanha.Ativo" class="form-check-input" />
+                    <ValidationMessage For="() => Campanha.Ativo" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="hotelid" class="form-label">HotelId:</label>
+                    <InputNumber id="hotelid" @bind-Value="Campanha.HotelId" class="form-control" />
+                    <ValidationMessage For="() => Campanha.HotelId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/campanhas">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Campanha? Campanha { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Campanha ??= await context.Campanhas.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Campanha is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateCampanha()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Campanha!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!CampanhaExists(Campanha!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/campanhas");
+    }
+
+    private bool CampanhaExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Campanhas.Any(e => e.Id == id);
+    }
+}

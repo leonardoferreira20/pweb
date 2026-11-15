@@ -1,0 +1,43 @@
+@page "/hotels"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using GestaoHoteis.Entities
+@using GestaoHoteis.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="hotels/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Hoteis">
+    <PropertyColumn Property="hotel => hotel.Nome" />
+    <PropertyColumn Property="hotel => hotel.Tipo" />
+    <PropertyColumn Property="hotel => hotel.Estrelas" />
+    <PropertyColumn Property="hotel => hotel.Descricao" />
+    <PropertyColumn Property="hotel => hotel.UrlImagem" />
+    <PropertyColumn Property="hotel => hotel.Imagem" />
+    <PropertyColumn Property="hotel => hotel.Ativo" />
+    <PropertyColumn Property="hotel => hotel.MoradaId" />
+
+    <TemplateColumn Context="hotel">
+        <a href="@($"hotels/edit?id={hotel.Id}")">Edit</a> |
+        <a href="@($"hotels/details?id={hotel.Id}")">Details</a> |
+        <a href="@($"hotels/delete?id={hotel.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

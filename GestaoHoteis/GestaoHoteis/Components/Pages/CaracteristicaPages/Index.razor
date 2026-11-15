@@ -1,0 +1,37 @@
+@page "/caracteristicas"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using GestaoHoteis.Entities
+@using GestaoHoteis.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="caracteristicas/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Caracteristicas">
+    <PropertyColumn Property="caracteristica => caracteristica.Nome" />
+    <PropertyColumn Property="caracteristica => caracteristica.Ativo" />
+
+    <TemplateColumn Context="caracteristica">
+        <a href="@($"caracteristicas/edit?id={caracteristica.Id}")">Edit</a> |
+        <a href="@($"caracteristicas/details?id={caracteristica.Id}")">Details</a> |
+        <a href="@($"caracteristicas/delete?id={caracteristica.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
