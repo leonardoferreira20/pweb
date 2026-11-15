@@ -17,54 +17,56 @@
             </NavLink>
         </div>
 
-        @* As sete listagens. Cada href é o @page de uma página Index gerada pelo scaffolder.
-           Ficam visíveis a todos (como no menu da aula), mas as páginas têm [Authorize]:
-           quem não tiver o role certo não entra, mesmo vendo a ligação. *@
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="hoteis">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Unidades hoteleiras
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="alojamentos">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Alojamentos
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categorias">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Categorias
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="caracteristicas">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Características
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="regimes">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Regimes alimentares
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="modos">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Disponibilização
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="campanhas">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Campanhas
-            </NavLink>
-        </div>
-
-        @* AuthorizeView COM Roles: só o Administrador e o Funcionario veem esta entrada.
-           A página das reservas ainda não existe: é feita numa etapa mais à frente. *@
+        @* AuthorizeView COM Roles: só o Administrador e o Funcionario veem estas entradas.
+           São os mesmos roles do [Authorize] das páginas: quem não pode abrir uma página
+           também não vê a ligação para ela. Esconder (aqui) e proteger (o [Authorize] de
+           cada página) andam juntos: sem sessão, ou só com o role Cliente, o menu fica
+           apenas com "Gestão de Hotéis". *@
         <AuthorizeView Roles="Administrador,Funcionario">
+            @* As sete listagens. Cada href é o @page de uma página Index. *@
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="hoteis">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Unidades hoteleiras
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="alojamentos">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Alojamentos
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="categorias">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Categorias
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="caracteristicas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Características
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="regimes">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Regimes alimentares
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="modos">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Disponibilização
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="campanhas">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Campanhas
+                </NavLink>
+            </div>
+
+            @* A página das reservas ainda não existe: é feita numa etapa mais à frente. *@
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="gerereservas">
                     <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Gerir Reservas

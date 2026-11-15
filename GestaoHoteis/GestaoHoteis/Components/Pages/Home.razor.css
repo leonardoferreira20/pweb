@@ -1,10 +1,20 @@
-﻿/* Estilos da página inicial. Só se aplicam a este componente (isolamento de CSS). */
-
-/* A imagem acompanha a janela: ocupa a largura disponível, nunca fica
-   mais alta do que o espaço visível, e mantém sempre a proporção. */
+﻿/* Fotografia de receção com proporção de 8:5 e enquadramento integral. */
 .imagem-home {
     display: block;
-    width: 100%; /* toda a largura da zona da página */
-    max-height: calc(100vh - 7rem); /* altura da janela menos a barra horizontal e as margens */
-    object-fit: contain; /* encaixa a imagem sem a cortar nem deformar */
+    width: min(100%, 72rem);
+    height: auto;
+    aspect-ratio: 8 / 5;
+    margin-inline: auto;
+    border: 1px solid color-mix(in srgb, var(--cor-contorno) 35%, var(--cor-superficie));
+    border-radius: clamp(.75rem, 1.5vw, 1.25rem);
+    background: var(--cor-superficie);
+    object-fit: contain;
+    box-shadow: 0 .65rem 1.6rem color-mix(in srgb, var(--cor-texto) 13%, transparent);
+}
+
+@media (min-width: 641px) {
+    .imagem-home {
+        width: min(100%, 72rem, max(18rem, calc((100vh - 8rem) * 1.6)));
+        width: min(100%, 72rem, max(18rem, calc((100svh - 8rem) * 1.6)));
+    }
 }
