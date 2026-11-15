@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etapa 2 · Base de dados, passo a passo</title>
+<style>
+:root {
+  --ink: #1E1B2E; --text: #3A3648; --muted: #7A7590; --purple: #512BD4; --orange: #E0782F;
+  --bg: #FFFFFF; --panel: #F4F3F7; --lav: #EFEBFB; --line: #DCD3F7; --peach: #FDF1E8;
+  --code: #221F33; --codeTx: #ECE8F7;
+  --ok: #1E8A4C; --okBg: #E6F4EC; --mv: #C2621B; --mvBg: #FDF1E8; --del: #C2412D; --delBg: #FBE9E6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #F1EEFA; --text: #D8D3E8; --muted: #A39DBB; --purple: #B7A8F0; --orange: #F0A060;
+    --bg: #17151F; --panel: #221F2E; --lav: #262238; --line: #3A3553; --peach: #2E2420;
+    --ok: #6FD49A; --okBg: #1C3327; --mv: #F2A363; --mvBg: #3A2A1C; --del: #F2836F; --delBg: #3B221E;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Arial, sans-serif; }
+header { background: #1E1B2E; color: #fff; padding: 28px 24px; }
+header .kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #B7A8F0; font-weight: 700; }
+header h1 { margin: 6px 0 0; font-size: 28px; line-height: 1.2; }
+.wrap { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 40px; max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+nav { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 24px 0; font-size: 14px; }
+nav ul { list-style: none; margin: 0; padding: 0; }
+nav > ul > li { margin-top: 10px; }
+nav > ul > li > a { font-weight: 700; color: var(--ink); }
+nav ul ul { padding-left: 12px; border-left: 2px solid var(--line); margin-top: 4px; }
+nav ul ul a { color: var(--muted); }
+nav a { display: block; padding: 2px 0; text-decoration: none; }
+nav a:hover, nav a.active { color: var(--purple); }
+main { padding: 16px 0 80px; min-width: 0; max-width: 860px; }
+h2 { color: var(--ink); font-size: 24px; margin: 48px 0 12px; padding-top: 8px; border-top: 3px solid var(--purple); }
+h3 { color: var(--ink); font-size: 19px; margin: 36px 0 8px; }
+h4 { color: var(--purple); font-size: 16px; margin: 28px 0 8px; }
+a { color: var(--purple); }
+hr { display: none; }
+p, li { max-width: 76ch; }
+code { font-family: "Cascadia Code", Consolas, "Courier New", monospace; font-size: .9em; }
+p code, li code, td code, .passo code, figcaption code { background: var(--lav); color: var(--purple); padding: 1px 5px; border-radius: 4px; }
+p code, li code, td code, .passo code { overflow-wrap: anywhere; }
+/* Nas tabelas, o código pode mudar de linha nos espaços: a tabela cabe na página. */
+td code { white-space: normal; overflow-wrap: anywhere; }
+p.lbl { padding: 10px 14px; border-radius: 6px; border-left: 4px solid var(--purple); background: var(--lav); }
+p.what { background: none; border-left: 0; padding: 0; color: var(--ink); font-size: 17px; }
+p.warn { background: var(--peach); border-left-color: var(--orange); }
+p.warn > strong:first-child { color: var(--orange); }
+p.check { background: var(--okBg); border-left-color: var(--ok); }
+p.check > strong:first-child { color: var(--ok); }
+p.note { background: var(--panel); border-left-color: var(--muted); }
+p.why > strong:first-child { color: var(--purple); }
+p.file { margin: 22px 0 6px; font-size: 14px; color: var(--muted); }
+p.file > code:first-child { background: none; color: var(--ink); font-weight: 700; padding: 0; font-size: 14px; }
+.passo { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 0; margin: 14px 0 18px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 15px; }
+.passo .k { background: var(--panel); color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.passo .v { padding: 8px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
+.passo .k:nth-last-child(2), .passo .v:last-child { border-bottom: 0; }
+.badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 10px; border-radius: 999px; }
+.b-criar, .b-pasta { background: var(--okBg); color: var(--ok); }
+.b-alterar { background: var(--mvBg); color: var(--mv); }
+.b-apagar { background: var(--delBg); color: var(--del); }
+.b-executar, .b-compilar, .b-copiar, .b-ver { background: var(--lav); color: var(--purple); }
+figure { margin: 18px 0 22px; }
+figure img { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; max-width: 76ch; }
+.codebox { position: relative; margin: 8px 0 18px; }
+.hl { background: var(--code) !important; border-radius: 8px; overflow-x: auto; }
+.hl pre { margin: 0; padding: 16px 18px; font-size: 13.5px; line-height: 20.25px; color: var(--codeTx); width: max-content; min-width: 100%; }
+.copy { position: absolute; top: 8px; right: 8px; border: 1px solid #4A4466; background: #2C2842; color: #ECE8F7; font: 12px system-ui, sans-serif; padding: 4px 10px; border-radius: 6px; cursor: pointer; opacity: .85; }
+.copy:hover { opacity: 1; }
+.copy.ok { background: var(--orange); border-color: var(--orange); color: #fff; }
+.tw { overflow-x: auto; margin: 12px 0 20px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { background: #1E1B2E; color: #fff; text-align: left; padding: 8px 10px; }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:nth-child(even) td { background: var(--panel); }
+pre { line-height: 125%; }
+td.linenos .normal { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #6e7681; background-color: #0d1117; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #e6edf3; background-color: #6e7681; padding-left: 5px; padding-right: 5px; }
+.hl .hll { background-color: #6e7681 }
+.hl { background: #0d1117; color: #E6EDF3 }
+.hl .c { color: #8B949E; font-style: italic } /* Comment */
+.hl .err { color: #F85149 } /* Error */
+.hl .esc { color: #E6EDF3 } /* Escape */
+.hl .g { color: #E6EDF3 } /* Generic */
+.hl .k { color: #FF7B72 } /* Keyword */
+.hl .l { color: #A5D6FF } /* Literal */
+.hl .n { color: #E6EDF3 } /* Name */
+.hl .o { color: #FF7B72; font-weight: bold } /* Operator */
+.hl .x { color: #E6EDF3 } /* Other */
+.hl .p { color: #E6EDF3 } /* Punctuation */
+.hl .ch { color: #8B949E; font-style: italic } /* Comment.Hashbang */
+.hl .cm { color: #8B949E; font-style: italic } /* Comment.Multiline */
+.hl .cp { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Preproc */
+.hl .cpf { color: #8B949E; font-style: italic } /* Comment.PreprocFile */
+.hl .c1 { color: #8B949E; font-style: italic } /* Comment.Single */
+.hl .cs { color: #8B949E; font-weight: bold; font-style: italic } /* Comment.Special */
+.hl .gd { color: #FFA198; background-color: #490202 } /* Generic.Deleted */
+.hl .ge { color: #E6EDF3; font-style: italic } /* Generic.Emph */
+.hl .ges { color: #E6EDF3; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.hl .gr { color: #FFA198 } /* Generic.Error */
+.hl .gh { color: #79C0FF; font-weight: bold } /* Generic.Heading */
+.hl .gi { color: #56D364; background-color: #0F5323 } /* Generic.Inserted */
+.hl .go { color: #8B949E } /* Generic.Output */
+.hl .gp { color: #8B949E } /* Generic.Prompt */
+.hl .gs { color: #E6EDF3; font-weight: bold } /* Generic.Strong */
+.hl .gu { color: #79C0FF } /* Generic.Subheading */
+.hl .gt { color: #FF7B72 } /* Generic.Traceback */
+.hl .g-Underline { color: #E6EDF3; text-decoration: underline } /* Generic.Underline */
+.hl .kc { color: #79C0FF } /* Keyword.Constant */
+.hl .kd { color: #FF7B72 } /* Keyword.Declaration */
+.hl .kn { color: #FF7B72 } /* Keyword.Namespace */
+.hl .kp { color: #79C0FF } /* Keyword.Pseudo */
+.hl .kr { color: #FF7B72 } /* Keyword.Reserved */
+.hl .kt { color: #FF7B72 } /* Keyword.Type */
+.hl .ld { color: #79C0FF } /* Literal.Date */
+.hl .m { color: #A5D6FF } /* Literal.Number */
+.hl .s { color: #A5D6FF } /* Literal.String */
+.hl .na { color: #E6EDF3 } /* Name.Attribute */
+.hl .nb { color: #E6EDF3 } /* Name.Builtin */
+.hl .nc { color: #F0883E; font-weight: bold } /* Name.Class */
+.hl .no { color: #79C0FF; font-weight: bold } /* Name.Constant */
+.hl .nd { color: #D2A8FF; font-weight: bold } /* Name.Decorator */
+.hl .ni { color: #FFA657 } /* Name.Entity */
+.hl .ne { color: #F0883E; font-weight: bold } /* Name.Exception */
+.hl .nf { color: #D2A8FF; font-weight: bold } /* Name.Function */
+.hl .nl { color: #79C0FF; font-weight: bold } /* Name.Label */
+.hl .nn { color: #FF7B72 } /* Name.Namespace */
+.hl .nx { color: #E6EDF3 } /* Name.Other */
+.hl .py { color: #79C0FF } /* Name.Property */
+.hl .nt { color: #7EE787 } /* Name.Tag */
+.hl .nv { color: #79C0FF } /* Name.Variable */
+.hl .ow { color: #FF7B72; font-weight: bold } /* Operator.Word */
+.hl .pm { color: #E6EDF3 } /* Punctuation.Marker */
+.hl .w { color: #6E7681 } /* Text.Whitespace */
+.hl .mb { color: #A5D6FF } /* Literal.Number.Bin */
+.hl .mf { color: #A5D6FF } /* Literal.Number.Float */
+.hl .mh { color: #A5D6FF } /* Literal.Number.Hex */
+.hl .mi { color: #A5D6FF } /* Literal.Number.Integer */
+.hl .mo { color: #A5D6FF } /* Literal.Number.Oct */
+.hl .sa { color: #79C0FF } /* Literal.String.Affix */
+.hl .sb { color: #A5D6FF } /* Literal.String.Backtick */
+.hl .sc { color: #A5D6FF } /* Literal.String.Char */
+.hl .dl { color: #79C0FF } /* Literal.String.Delimiter */
+.hl .sd { color: #A5D6FF } /* Literal.String.Doc */
+.hl .s2 { color: #A5D6FF } /* Literal.String.Double */
+.hl .se { color: #79C0FF } /* Literal.String.Escape */
+.hl .sh { color: #79C0FF } /* Literal.String.Heredoc */
+.hl .si { color: #A5D6FF } /* Literal.String.Interpol */
+.hl .sx { color: #A5D6FF } /* Literal.String.Other */
+.hl .sr { color: #79C0FF } /* Literal.String.Regex */
+.hl .s1 { color: #A5D6FF } /* Literal.String.Single */
+.hl .ss { color: #A5D6FF } /* Literal.String.Symbol */
+.hl .bp { color: #E6EDF3 } /* Name.Builtin.Pseudo */
+.hl .fm { color: #D2A8FF; font-weight: bold } /* Name.Function.Magic */
+.hl .vc { color: #79C0FF } /* Name.Variable.Class */
+.hl .vg { color: #79C0FF } /* Name.Variable.Global */
+.hl .vi { color: #79C0FF } /* Name.Variable.Instance */
+.hl .vm { color: #79C0FF } /* Name.Variable.Magic */
+.hl .il { color: #A5D6FF } /* Literal.Number.Integer.Long */
+.hl .hll { background: rgba(183, 168, 240, .22); display: block; margin: 0 -18px; padding: 0 18px; box-shadow: inset 3px 0 0 #B7A8F0; }
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: 1fr; gap: 0; padding: 0 16px; }
+  nav { position: static; max-height: none; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+  header { padding: 22px 16px; }
+  .passo { grid-template-columns: 1fr; }
+  .passo .k { border-bottom: 0; padding-bottom: 0; background: none; }
+  .passo .k:nth-last-child(2) { border-bottom: 0; }
+}
+@media print {
+  nav, .copy { display: none; }
+  .wrap { display: block; }
+  .hl pre { white-space: pre-wrap; width: auto; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Programação Web · 2026/27 · Trabalho prático MyHotels · Etapa 2 (ficha 4)</div>
+  <h1>Etapa 2: Base de dados da Gestão de Hotéis, passo a passo</h1>
+</header>
+<div class="wrap">
+<nav aria-label="Índice"><ul><li><a href="#0-antes-de-começar">0. Antes de começar</a><ul><li><a href="#01-o-que-vamos-fazer">0.1 O que vamos fazer</a></li><li><a href="#02-como-ler-este-guia">0.2 Como ler este guia</a></li><li><a href="#03-ponto-de-partida">0.3 Ponto de partida</a></li><li><a href="#04-mapa-da-etapa">0.4 Mapa da etapa</a></li><li><a href="#05-onde-o-guia-difere-da-ficha-4">0.5 Onde o guia difere da ficha 4</a></li><li><a href="#06-duas-situações-possíveis-consoante-a-etapa-1">0.6 Duas situações possíveis, consoante a Etapa 1</a></li></ul></li><li><a href="#1-criar-a-base-de-dados-etapa-3-da-ficha">1. Criar a base de dados (etapa 3 da ficha)</a><ul><li><a href="#3a-gerar-a-migration-add-migration-bdinicial">3.a Gerar a migration: Add-Migration BDInicial</a></li><li><a href="#3b-criar-a-base-de-dados-update-database">3.b Criar a base de dados: Update-Database</a></li><li><a href="#3c-ver-a-base-de-dados-no-visual-studio">3.c Ver a base de dados no Visual Studio</a></li><li><a href="#3d-comparar-as-tabelas-com-as-classes">3.d Comparar as tabelas com as classes</a></li></ul></li><li><a href="#2-primeiro-arranque-os-dados-iniciais-complemento">2. Primeiro arranque: os dados iniciais (complemento)</a></li><li><a href="#3-quando-a-base-de-dados-não-sai-certa">3. Quando a base de dados não sai certa</a><ul><li><a href="#31-antes-do-update-database">3.1 Antes do Update-Database</a></li><li><a href="#32-depois-do-update-database">3.2 Depois do Update-Database</a></li><li><a href="#33-o-que-não-fazer">3.3 O que não fazer</a></li></ul></li><li><a href="#4-ponto-de-situação">4. Ponto de situação</a><ul><li><a href="#41-como-fica-o-projeto">4.1 Como fica o projeto</a></li><li><a href="#42-lista-de-verificação">4.2 Lista de verificação</a></li><li><a href="#43-erros-frequentes">4.3 Erros frequentes</a></li><li><a href="#44-o-que-vem-a-seguir">4.4 O que vem a seguir</a></li></ul></li></ul></nav>
+<main>
+<h2 id="0-antes-de-começar">0. Antes de começar</h2>
+<h3 id="01-o-que-vamos-fazer">0.1 O que vamos fazer</h3>
+<p>A Etapa 2 cria a base de dados <code>MyHotelsPWeb</code> a partir das classes escritas na Etapa 1. Corresponde à ficha 4 das aulas laboratoriais. Não se escreve código: correm-se dois comandos no Visual Studio e confirma-se, tabela a tabela, que a base de dados ficou como as classes e o MER descrevem.</p>
+<div class="tw"><table>
+<thead><tr><th>Etapa</th><th>Ficha das aulas</th><th>O que se faz</th><th>Como fica a aplicação no fim</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>3</td><td>Projeto com autenticação, as entidades do MER, contexto de base de dados, configuração e código de arranque</td><td>Compila, mas não arranca: a base de dados ainda não existe</td></tr>
+<tr><td><strong>2 (esta)</strong></td><td>4</td><td>Criação da base de dados <code>MyHotelsPWeb</code> com migrations, e verificação das tabelas</td><td>Arranca outra vez e cria sozinha os roles e o utilizador administrador</td></tr>
+<tr><td>3</td><td>5</td><td>Validações e regras na base de dados, dados de exemplo, páginas Home e Sobre, menu, e as páginas de gestão (CRUD) do catálogo</td><td>Faz-se login como administrador e gere-se o catálogo</td></tr>
+</tbody>
+</table></div>
+<p>São dois comandos, escritos no Console do Gerenciador de Pacotes:</p>
+<div class="tw"><table>
+<thead><tr><th>Comando</th><th>O que faz</th><th>Mexe na base de dados?</th></tr></thead>
+<tbody>
+<tr><td><code>Add-Migration BDInicial</code></td><td>Compara as classes com a última migration e escreve, em C#, o que falta criar na base de dados</td><td>Não. Só cria ficheiros no projeto</td></tr>
+<tr><td><code>Update-Database</code></td><td>Executa as migrations que ainda não foram aplicadas</td><td>Sim. Cria a base de dados e as tabelas</td></tr>
+</tbody>
+</table></div>
+<p>Os conceitos (ORM, migrations, a tabela <code>__EFMigrationsHistory</code>, o que cada anotação faz à coluna) estão explicados nos slides da Etapa 1 e nos slides desta etapa. Aqui fica o que é preciso para executar e verificar cada passo.</p>
+<h3 id="02-como-ler-este-guia">0.2 Como ler este guia</h3>
+<p>Cada passo corresponde a uma alínea da ficha 4 e tem os mesmos blocos do guia da Etapa 1: o quadro do passo, o que vamos fazer, o comando (com um botão para copiar), o porquê e o que verificar. Neste guia, "a ficha" é sempre a ficha 4.</p>
+<p>A ficha 4 continua a numeração da ficha 3: tem uma só etapa, a etapa 3, com as alíneas a a d. Por isso os passos deste guia chamam-se 3.a a 3.d. Quando o guia refere uma alínea da Etapa 1, di-lo sempre (por exemplo, "alínea 3.e da Etapa 1").</p>
+<h3 id="03-ponto-de-partida">0.3 Ponto de partida</h3>
+<p>Esta etapa parte do projeto <code>GestaoHoteis</code> tal como ficou no fim da Etapa 1. Antes de começar, confirmar três coisas:</p>
+<div class="tw"><table>
+<thead><tr><th>O quê</th><th>Como confirmar</th><th>Se falhar</th></tr></thead>
+<tbody>
+<tr><td>O projeto compila</td><td>Ctrl+Shift+B: zero erros e zero avisos</td><td>Etapa 1, secção 4.3 (erros frequentes)</td></tr>
+<tr><td>A connection string aponta para <code>MyHotelsPWeb</code></td><td><code>GestaoHoteis/appsettings.json</code> tem <code>Database=MyHotelsPWeb</code></td><td>Etapa 1, alínea 3.e, passo 5</td></tr>
+<tr><td>O LocalDB existe</td><td>Numa janela do PowerShell, <code>sqllocaldb info</code> mostra <code>MSSQLLocalDB</code></td><td>Etapa 1, secção 0.6</td></tr>
+</tbody>
+</table></div>
+<p>Neste momento, ao carregar em F5, a aplicação pára com a exceção <code>SqlException</code> e a mensagem <code>Cannot open database "MyHotelsPWeb"</code>. É o esperado desde a alínea 3.k da Etapa 1, e é exatamente o que esta etapa resolve.</p>
+<h3 id="04-mapa-da-etapa">0.4 Mapa da etapa</h3>
+<div class="tw"><table>
+<thead><tr><th>Alínea</th><th>Ação</th><th>Onde</th><th>Resultado</th></tr></thead>
+<tbody>
+<tr><td>3.a</td><td>Executar <code>Add-Migration BDInicial</code></td><td>Console do Gerenciador de Pacotes</td><td>Três ficheiros novos ou alterados na pasta das migrations</td></tr>
+<tr><td>3.b</td><td>Executar <code>Update-Database</code></td><td>Console do Gerenciador de Pacotes</td><td>A base de dados <code>MyHotelsPWeb</code>, com as tabelas</td></tr>
+<tr><td>3.c</td><td>Consultar</td><td>Pesquisador de Objetos do SQL Server</td><td>A base de dados e as 22 tabelas à vista</td></tr>
+<tr><td>3.d</td><td>Consultar e comparar</td><td>Pesquisador de Objetos do SQL Server</td><td>As colunas, as chaves e os índices confirmados, classe a classe</td></tr>
+<tr><td>complemento</td><td>Executar (F5)</td><td>o projeto <code>GestaoHoteis</code></td><td>A aplicação volta a arrancar e cria os roles e o administrador</td></tr>
+</tbody>
+</table></div>
+<p>Nesta etapa não se cria nem se altera nenhum ficheiro à mão. Os únicos ficheiros novos são os que o <code>Add-Migration</code> gera.</p>
+<h3 id="05-onde-o-guia-difere-da-ficha-4">0.5 Onde o guia difere da ficha 4</h3>
+<div class="tw"><table>
+<thead><tr><th>Na ficha 4</th><th>Neste guia</th><th>Razão</th></tr></thead>
+<tbody>
+<tr><td>Base de dados <code>FrutariaPWeb</code>, com 11 tabelas</td><td>Base de dados <code>MyHotelsPWeb</code>, com 22 tabelas</td><td>As doze entidades do MER, mais as duas tabelas de ligação das relações N-M</td></tr>
+<tr><td>"execute a instrução migration update-database"</td><td><code>Update-Database</code></td><td>O comando é só <code>Update-Database</code>, como no guia da ficha 4</td></tr>
+<tr><td>Figura 3: Exibir &gt; Server Explorer</td><td>Exibir &gt; Pesquisador de Objetos do SQL Server</td><td>É a janela das figuras seguintes da ficha, e mostra logo o LocalDB</td></tr>
+<tr><td>Figuras 6 e 7: as colunas de <code>Produtos</code> e de <code>AspNetUsers</code></td><td>As listas de colunas da alínea 3.d</td><td>As tabelas têm de corresponder às nossas classes</td></tr>
+<tr><td>Aviso do <code>decimal</code> sem tipo (<code>EmStock</code>)</td><td>Não aparece</td><td>Todas as propriedades <code>decimal</code> da Etapa 1 têm <code>[Column(TypeName = ...)]</code></td></tr>
+<tr><td>Compara colunas, tipos e nulos</td><td>Compara também as chaves estrangeiras, os índices únicos e as regras de apagar</td><td>São o que as relações 1-1 e o <code>OnModelCreating</code> da Etapa 1 acrescentam</td></tr>
+<tr><td>Administrador com <code>Estado</code> Pendente</td><td>Administrador com <code>Estado</code> Ativo</td><td>Etapa 1, alínea 3.g</td></tr>
+</tbody>
+</table></div>
+<h3 id="06-duas-situações-possíveis-consoante-a-etapa-1">0.6 Duas situações possíveis, consoante a Etapa 1</h3>
+<p>Na alínea 3.e da Etapa 1 houve dois caminhos, conforme o motor de base de dados para que o template criou o projeto. Isso muda o que se vê nesta etapa, mas não a base de dados final.</p>
+<div class="tw"><table>
+<thead><tr><th></th><th>Projeto criado para SQL Server LocalDB</th><th>Projeto criado para SQLite</th></tr></thead>
+<tbody>
+<tr><td>Na Etapa 1</td><td>A pasta <code>GestaoHoteis/Data/Migrations/</code> ficou, com a migration do template</td><td>A pasta <code>GestaoHoteis/Data/Migrations/</code> foi apagada (alínea 3.e, passo 4)</td></tr>
+<tr><td>Onde o <code>Add-Migration</code> escreve</td><td><code>GestaoHoteis/Data/Migrations/</code>, ao lado da migration do template</td><td><code>GestaoHoteis/Migrations/</code>, uma pasta nova na raiz do projeto</td></tr>
+<tr><td>O que a <code>BDInicial</code> contém</td><td>Acrescenta as colunas do <code>ApplicationUser</code> à tabela <code>AspNetUsers</code> e cria as nossas 14 tabelas. As tabelas do Identity já estão na migration do template</td><td>Cria todas as tabelas: as do Identity e as nossas</td></tr>
+<tr><td>O que o <code>Update-Database</code> aplica</td><td>Duas migrations: <code>00000000000000_CreateIdentitySchema</code> e <code>BDInicial</code></td><td>Uma migration: <code>BDInicial</code></td></tr>
+<tr><td>A base de dados final</td><td>A mesma</td><td>A mesma</td></tr>
+</tbody>
+</table></div>
+<p>Para saber em que caso se está: no Gerenciador de Soluções, ver se existe <code>GestaoHoteis/Data/Migrations/00000000000000_CreateIdentitySchema.cs</code>. Se existir, é o primeiro caso.</p>
+<h2 id="1-criar-a-base-de-dados-etapa-3-da-ficha">1. Criar a base de dados (etapa 3 da ficha)</h2>
+<h3 id="3a-gerar-a-migration-add-migration-bdinicial">3.a Gerar a migration: Add-Migration BDInicial</h3>
+<div class="passo"><div class="k">Alínea da ficha</div><div class="v">3.a</div><div class="k">Ação</div><div class="v"><span class="badge b-executar">Executar</span></div><div class="k">Onde</div><div class="v">Console do Gerenciador de Pacotes, com <code>GestaoHoteis</code> em "Projeto padrão". Os ficheiros são criados em <code>GestaoHoteis/Data/Migrations/</code> ou em <code>GestaoHoteis/Migrations/</code> (secção 0.6)</div><div class="k">Como lá chegar</div><div class="v">menu Ferramentas &gt; Gerenciador de Pacotes do NuGet &gt; Console do Gerenciador de Pacotes (Figura 1 da ficha). A consola abre na parte de baixo do Visual Studio; escrever o comando à frente de <code>PM&gt;</code> e carregar em Enter</div></div>
+<p class="lbl what"><strong>O que vamos fazer.</strong> Pedir ao Entity Framework que compare as classes com a última migration e escreva, num ficheiro C#, as instruções para pôr a base de dados igual às classes.</p>
+<div class="hl"><pre><span></span><code><span class="nb">Add-Migration</span> <span class="n">BDInicial</span>
+</code></pre></div>
+<p>A consola mostra <code>Build started...</code> e <code>Build succeeded.</code>, porque o comando começa por compilar o projeto. No fim aparece <code>To undo this action, use Remove-Migration.</code> e o Visual Studio abre o ficheiro da migration que acabou de criar.</p>
+<p class="lbl why"><strong>Porquê.</strong> O <code>Add-Migration</code> faz quatro coisas, por esta ordem:</p>
+<ol>
+<li>compila o projeto (se houver erros, pára aqui com <code>Build failed.</code>);</li>
+<li>constrói o modelo a partir do <code>ApplicationDbContext</code>: os doze <code>DbSet</code>, as classes da pasta <code>Entities</code>, o <code>ApplicationUser</code>, as relações do <code>OnModelCreating</code> e as tabelas que o <code>IdentityDbContext</code> traz;</li>
+<li>compara esse modelo com a fotografia guardada na última migration (o ficheiro <code>ApplicationDbContextModelSnapshot.cs</code>), ou com um modelo vazio, se ainda não houver migrations;</li>
+<li>escreve as diferenças como código C#, num ficheiro novo, e atualiza a fotografia.</li>
+</ol>
+<p>Não toca na base de dados. Nesta altura a <code>MyHotelsPWeb</code> continua a não existir.</p>
+<p>O nome <code>BDInicial</code> é escolhido por nós, e é o da ficha: identifica a migration e deve dizer o que ela faz.</p>
+<div class="tw"><table>
+<thead><tr><th>Ficheiro</th><th>O que é</th><th>Mexe-se nele?</th></tr></thead>
+<tbody>
+<tr><td><code>&lt;data&gt;_BDInicial.cs</code></td><td>A migration: o método <code>Up</code> aplica as alterações (cria tabelas, acrescenta colunas) e o método <code>Down</code> desfá-las</td><td>Não</td></tr>
+<tr><td><code>&lt;data&gt;_BDInicial.Designer.cs</code></td><td>Informação interna do Entity Framework sobre esta migration</td><td>Não</td></tr>
+<tr><td><code>ApplicationDbContextModelSnapshot.cs</code></td><td>A fotografia do modelo depois desta migration. É com ela que o próximo <code>Add-Migration</code> vai comparar</td><td>Não</td></tr>
+</tbody>
+</table></div>
+<p><code>&lt;data&gt;</code> é a data e a hora em que o comando correu, no formato AAAAMMDDhhmmss (por exemplo <code>20261118101532_BDInicial.cs</code>). É o que mantém as migrations por ordem.</p>
+<p>O <code>Add-Migration</code> corre o <code>Program.cs</code> só até à linha <code>var app = builder.Build();</code>, para saber como o contexto é configurado. O bloco dos dados iniciais (alínea 3.k da Etapa 1) fica depois dessa linha e não é executado: é por isso que o comando funciona, apesar de a aplicação não arrancar.</p>
+<p class="lbl warn"><strong>Atenção.</strong> Correr o comando uma única vez. Se for corrido de novo, o Visual Studio responde que o nome <code>BDInicial</code> já é usado por uma migration. Se for preciso refazer a migration, a forma certa está na secção 3. Em grupo, só uma pessoa corre o <code>Add-Migration</code>; os outros recebem os ficheiros pelo repositório e correm apenas o <code>Update-Database</code>.</p>
+<h4 id="a-ver-sem-alterar-o-ficheiro-da-migration">A ver, sem alterar: o ficheiro da migration</h4>
+<p>O ficheiro que o Visual Studio abriu é código C# gerado. Não é para alterar, mas vale a pena lê-lo: é a tradução direta das classes da Etapa 1. Este é o excerto do método <code>Up</code> que cria a tabela <code>Alojamentos</code>:</p>
+<p class="file"><code>&lt;data&gt;_BDInicial.cs</code> (excerto do método Up, só para ler)</p>
+<div class="hl"><pre><span></span><code><span class="n">migrationBuilder</span><span class="p">.</span><span class="n">CreateTable</span><span class="p">(</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Alojamentos"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">columns</span><span class="p">:</span><span class="w"> </span><span class="n">table</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">Annotation</span><span class="p">(</span><span class="s">"SqlServer:Identity"</span><span class="p">,</span><span class="w"> </span><span class="s">"1, 1"</span><span class="p">),</span>
+<span class="w">        </span><span class="n">Nome</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"nvarchar(100)"</span><span class="p">,</span><span class="w"> </span><span class="n">maxLength</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">Descricao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"nvarchar(500)"</span><span class="p">,</span><span class="w"> </span><span class="n">maxLength</span><span class="p">:</span><span class="w"> </span><span class="mi">500</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">Capacidade</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">NumUnidades</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">PrecoNoite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">decimal</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"decimal(10,2)"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">UrlImagem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"nvarchar(200)"</span><span class="p">,</span><span class="w"> </span><span class="n">maxLength</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">),</span>
+<span class="w">        </span><span class="n">Imagem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">byte</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"varbinary(max)"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">),</span>
+<span class="w">        </span><span class="n">Ativo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"bit"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">HotelId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">CategoriaId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">ModoDisponibilizacaoId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">)</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">constraints</span><span class="p">:</span><span class="w"> </span><span class="n">table</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">table</span><span class="p">.</span><span class="n">PrimaryKey</span><span class="p">(</span><span class="s">"PK_Alojamentos"</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+<span class="w">        </span><span class="n">table</span><span class="p">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+<span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"FK_Alojamentos_Categorias_CategoriaId"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">column</span><span class="p">:</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">CategoriaId</span><span class="p">,</span>
+<span class="w">            </span><span class="n">principalTable</span><span class="p">:</span><span class="w"> </span><span class="s">"Categorias"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">principalColumn</span><span class="p">:</span><span class="w"> </span><span class="s">"Id"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">onDelete</span><span class="p">:</span><span class="w"> </span><span class="n">ReferentialAction</span><span class="p">.</span><span class="n">Restrict</span><span class="p">);</span>
+<span class="w">        </span><span class="n">table</span><span class="p">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+<span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"FK_Alojamentos_Hoteis_HotelId"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">column</span><span class="p">:</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">HotelId</span><span class="p">,</span>
+<span class="w">            </span><span class="n">principalTable</span><span class="p">:</span><span class="w"> </span><span class="s">"Hoteis"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">principalColumn</span><span class="p">:</span><span class="w"> </span><span class="s">"Id"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">onDelete</span><span class="p">:</span><span class="w"> </span><span class="n">ReferentialAction</span><span class="p">.</span><span class="n">Restrict</span><span class="p">);</span>
+<span class="w">        </span><span class="n">table</span><span class="p">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+<span class="w">            </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"FK_Alojamentos_ModosDisponibilizacao_ModoDisponibilizacaoId"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">column</span><span class="p">:</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">ModoDisponibilizacaoId</span><span class="p">,</span>
+<span class="w">            </span><span class="n">principalTable</span><span class="p">:</span><span class="w"> </span><span class="s">"ModosDisponibilizacao"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">principalColumn</span><span class="p">:</span><span class="w"> </span><span class="s">"Id"</span><span class="p">,</span>
+<span class="w">            </span><span class="n">onDelete</span><span class="p">:</span><span class="w"> </span><span class="n">ReferentialAction</span><span class="p">.</span><span class="n">Restrict</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+</code></pre></div>
+<div class="tw"><table>
+<thead><tr><th>No ficheiro</th><th>Vem de (classe <code>Alojamento</code>, Etapa 1)</th></tr></thead>
+<tbody>
+<tr><td><code>.Annotation("SqlServer:Identity", "1, 1")</code> em <code>Id</code></td><td>A convenção: uma propriedade <code>int Id</code> é a chave primária, numerada pela base de dados a partir de 1</td></tr>
+<tr><td><code>nvarchar(100)</code> e <code>nullable: false</code> em <code>Nome</code></td><td><code>[StringLength(100)]</code> e <code>[Required]</code>. O <code>?</code> de <code>string?</code> não conta para a tabela: manda o <code>[Required]</code></td></tr>
+<tr><td><code>nvarchar(200)</code> e <code>nullable: true</code> em <code>UrlImagem</code></td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+<tr><td><code>decimal(10,2)</code> em <code>PrecoNoite</code></td><td><code>[Column(TypeName = "decimal(10,2)")]</code></td></tr>
+<tr><td><code>HotelId</code>, <code>CategoriaId</code> e <code>ModoDisponibilizacaoId</code>, <code>nullable: false</code></td><td>As três chaves estrangeiras <code>int</code>: relações obrigatórias</td></tr>
+<tr><td><code>onDelete: ReferentialAction.Restrict</code> nas três chaves</td><td><code>OnDelete(DeleteBehavior.Restrict)</code> no <code>OnModelCreating</code> (Etapa 1, alínea 3.c). Sem ele, estaria aqui <code>ReferentialAction.Cascade</code></td></tr>
+<tr><td>Nenhuma coluna <code>hotel</code>, <code>categoria</code>, <code>regimes</code> ou <code>caracteristicas</code></td><td>As navegações não são colunas</td></tr>
+</tbody>
+</table></div>
+<p>As duas coleções N-M do alojamento não estão na tabela <code>Alojamentos</code>: cada uma deu origem a uma tabela de ligação, que o EF Core criou sem haver classe para ela. Esta é a dos regimes alimentares:</p>
+<p class="file"><code>&lt;data&gt;_BDInicial.cs</code> (excerto: a tabela de ligação de uma relação N-M)</p>
+<div class="hl"><pre><span></span><code><span class="n">migrationBuilder</span><span class="p">.</span><span class="n">CreateTable</span><span class="p">(</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"AlojamentoRegimeAlimentar"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">columns</span><span class="p">:</span><span class="w"> </span><span class="n">table</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">alojamentosId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">),</span>
+<span class="w">        </span><span class="n">regimesId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">table</span><span class="p">.</span><span class="n">Column</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"int"</span><span class="p">,</span><span class="w"> </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">)</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="n">constraints</span><span class="p">:</span><span class="w"> </span><span class="n">table</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">table</span><span class="p">.</span><span class="n">PrimaryKey</span><span class="p">(</span><span class="s">"PK_AlojamentoRegimeAlimentar"</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">alojamentosId</span><span class="p">,</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">regimesId</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
+<div class="tw"><table>
+<thead><tr><th>No ficheiro</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td><code>alojamentosId</code> e <code>regimesId</code></td><td>As duas chaves estrangeiras. O nome vem da navegação do outro lado (<code>alojamentos</code>, em <code>RegimeAlimentar</code>; <code>regimes</code>, em <code>Alojamento</code>) seguido de <code>Id</code></td></tr>
+<tr><td><code>PrimaryKey(..., x =&gt; new { x.alojamentosId, x.regimesId })</code></td><td>Chave primária composta pelas duas colunas: o mesmo par (alojamento, regime) não se repete</td></tr>
+<tr><td><code>ReferentialAction.Cascade</code> nas duas</td><td>Apagar um alojamento ou um regime apaga as linhas de ligação. O outro lado fica</td></tr>
+</tbody>
+</table></div>
+<p>Mais abaixo, no mesmo método, há uma instrução <code>CreateIndex</code> por cada chave estrangeira. Nas relações 1-1 o índice é único, e é ele que garante o "1" do outro lado:</p>
+<p class="file"><code>&lt;data&gt;_BDInicial.cs</code> (excerto: o índice único de uma relação 1-1)</p>
+<div class="hl"><pre><span></span><code><span class="n">migrationBuilder</span><span class="p">.</span><span class="n">CreateIndex</span><span class="p">(</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"IX_Hoteis_MoradaId"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">table</span><span class="p">:</span><span class="w"> </span><span class="s">"Hoteis"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">column</span><span class="p">:</span><span class="w"> </span><span class="s">"MoradaId"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">unique</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+</code></pre></div>
+<p>Há cinco destes, um por cada relação 1-1 do MER: <code>IX_Hoteis_MoradaId</code>, <code>IX_Reservas_MoradaFaturacaoId</code>, <code>IX_AspNetUsers_MoradaId</code> (com <code>filter: "[MoradaId] IS NOT NULL"</code>, porque a morada do utilizador é opcional), <code>IX_Pagamentos_ReservaId</code> e <code>IX_Faturas_ReservaId</code>. O método <code>Down</code>, no fim do ficheiro, faz o contrário de tudo isto: apaga as tabelas.</p>
+<p>No projeto criado para SQL Server LocalDB (secção 0.6), o início do método <code>Up</code> não cria a tabela <code>AspNetUsers</code>, porque ela já está na migration do template. Em vez disso, acrescenta-lhe as colunas do <code>ApplicationUser</code>, uma a uma:</p>
+<p class="file"><code>&lt;data&gt;_BDInicial.cs</code> (excerto, só no projeto criado para SQL Server LocalDB)</p>
+<div class="hl"><pre><span></span><code><span class="n">migrationBuilder</span><span class="p">.</span><span class="n">AddColumn</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">    </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Apelido"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">table</span><span class="p">:</span><span class="w"> </span><span class="s">"AspNetUsers"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">type</span><span class="p">:</span><span class="w"> </span><span class="s">"nvarchar(100)"</span><span class="p">,</span>
+<span class="w">    </span><span class="n">maxLength</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span>
+<span class="w">    </span><span class="n">nullable</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+</code></pre></div>
+<p>No projeto criado para SQLite, o mesmo ficheiro começa por um <code>CreateTable</code> para cada uma das tabelas do Identity, e a <code>AspNetUsers</code> já traz as colunas do <code>ApplicationUser</code>.</p>
+<p class="lbl check"><strong>Verificar.</strong> Na pasta das migrations (secção 0.6) estão os ficheiros <code>&lt;data&gt;_BDInicial.cs</code> e <code>&lt;data&gt;_BDInicial.Designer.cs</code>, e o <code>ApplicationDbContextModelSnapshot.cs</code>. O método <code>Up</code> tem 14 instruções <code>CreateTable</code> para as nossas tabelas (as doze entidades e as duas de ligação), e nenhum aviso apareceu na consola. Se o método <code>Up</code> estiver vazio, ou faltarem tabelas, não avançar: ver a secção 3.</p>
+<h3 id="3b-criar-a-base-de-dados-update-database">3.b Criar a base de dados: Update-Database</h3>
+<div class="passo"><div class="k">Alínea da ficha</div><div class="v">3.b</div><div class="k">Ação</div><div class="v"><span class="badge b-executar">Executar</span></div><div class="k">Onde</div><div class="v">Console do Gerenciador de Pacotes (a mesma janela do passo anterior)</div><div class="k">Como lá chegar</div><div class="v">escrever o comando à frente de <code>PM&gt;</code> e carregar em Enter</div></div>
+<p class="lbl what"><strong>O que vamos fazer.</strong> Executar a migration: criar a base de dados <code>MyHotelsPWeb</code> no LocalDB, com todas as tabelas.</p>
+<div class="hl"><pre><span></span><code><span class="nb">Update-Database</span>
+</code></pre></div>
+<p>A resposta, no projeto criado para SQL Server LocalDB:</p>
+<div class="hl"><pre><span></span><code>Build started...
+Build succeeded.
+Applying migration '00000000000000_CreateIdentitySchema'.
+Applying migration '20261118101532_BDInicial'.
+Done.
+</code></pre></div>
+<p>No projeto criado para SQLite falta a linha da <code>CreateIdentitySchema</code>. A data na linha da <code>BDInicial</code> é a de cada um.</p>
+<p class="lbl why"><strong>Porquê.</strong> O <code>Update-Database</code> usa a connection string do <code>appsettings.json</code> (a <code>DefaultConnection</code> da alínea 3.e da Etapa 1) e faz o seguinte:</p>
+<ol>
+<li>liga-se ao servidor <code>(localdb)\mssqllocaldb</code> e, como a base de dados <code>MyHotelsPWeb</code> não existe, cria-a;</li>
+<li>cria a tabela <code>__EFMigrationsHistory</code>, onde o Entity Framework regista as migrations já aplicadas;</li>
+<li>compara as migrations do projeto com as que estão registadas nessa tabela, e executa as que faltam, por ordem de data;</li>
+<li>regista cada migration aplicada na <code>__EFMigrationsHistory</code>.</li>
+</ol>
+<p>Por isso, correr o comando outra vez não faz mal: responde <code>No migrations were applied. The database is already up to date.</code> e não altera nada.</p>
+<p class="lbl note"><strong>Nota.</strong> A base de dados fica guardada em dois ficheiros, <code>MyHotelsPWeb.mdf</code> (os dados) e <code>MyHotelsPWeb_log.ldf</code> (o registo de transações), na pasta do utilizador do Windows (<code>C:\Users\&lt;utilizador&gt;\</code>). Não se mexe neles diretamente: quem os gere é o LocalDB. Cada elemento do grupo tem a sua base de dados, na sua máquina; o que se partilha no repositório são as migrations.</p>
+<p class="lbl warn"><strong>Atenção.</strong> Se o comando parar com <code>Introducing FOREIGN KEY constraint ... may cause cycles or multiple cascade paths</code>, falta alguma das linhas <code>OnDelete(DeleteBehavior.Restrict)</code> do <code>OnModelCreating</code> (Etapa 1, alínea 3.c, passo 2). Corrigir o contexto e refazer a migration pela secção 3.2.</p>
+<p class="lbl check"><strong>Verificar.</strong> A consola termina com <code>Done.</code> e não mostra linhas a vermelho. Se aparecer um erro, ver a secção 4.3.</p>
+<h3 id="3c-ver-a-base-de-dados-no-visual-studio">3.c Ver a base de dados no Visual Studio</h3>
+<div class="passo"><div class="k">Alínea da ficha</div><div class="v">3.c</div><div class="k">Ação</div><div class="v"><span class="badge b-ver">Consultar</span></div><div class="k">Onde</div><div class="v">Pesquisador de Objetos do SQL Server</div><div class="k">Como lá chegar</div><div class="v">menu Exibir &gt; Pesquisador de Objetos do SQL Server (atalho Ctrl+\ seguido de Ctrl+S). A janela abre do lado esquerdo</div></div>
+<p class="lbl what"><strong>O que vamos fazer.</strong> Confirmar que a base de dados <code>MyHotelsPWeb</code> existe e tem as tabelas esperadas.</p>
+<p class="lbl note"><strong>Nota.</strong> A ficha indica Exibir &gt; Server Explorer (Figura 3). A janela das Figuras 4 a 7 é outra, o Pesquisador de Objetos do SQL Server, que está no mesmo menu, umas linhas abaixo. É essa que se usa: mostra o LocalDB sem ser preciso configurar nada.</p>
+<p>Na janela, abrir os nós por esta ordem (clicar no triângulo à esquerda de cada um): SQL Server; <code>(localdb)\MSSQLLocalDB</code>; Bancos de Dados; <code>MyHotelsPWeb</code>; Tabelas.</p>
+<p>Dentro de Tabelas, além das pastas de sistema, têm de aparecer estas 22 tabelas:</p>
+<div class="tw"><table>
+<thead><tr><th>Tabelas</th><th>Quantas</th><th>De onde vêm</th></tr></thead>
+<tbody>
+<tr><td><code>__EFMigrationsHistory</code></td><td>1</td><td>Do Entity Framework: a lista das migrations aplicadas</td></tr>
+<tr><td><code>AspNetRoleClaims</code>, <code>AspNetRoles</code>, <code>AspNetUserClaims</code>, <code>AspNetUserLogins</code>, <code>AspNetUserRoles</code>, <code>AspNetUsers</code>, <code>AspNetUserTokens</code></td><td>7</td><td>Do Identity: o <code>ApplicationDbContext</code> herda de <code>IdentityDbContext&lt;ApplicationUser&gt;</code> (Etapa 1, alínea 1.b)</td></tr>
+<tr><td><code>Alojamentos</code>, <code>Campanhas</code>, <code>Caracteristicas</code>, <code>Categorias</code>, <code>Faturas</code>, <code>Hoteis</code>, <code>LinhasReserva</code>, <code>ModosDisponibilizacao</code>, <code>Moradas</code>, <code>Pagamentos</code>, <code>RegimesAlimentares</code>, <code>Reservas</code></td><td>12</td><td>Dos doze <code>DbSet</code> do <code>ApplicationDbContext</code> (Etapa 1, alínea 3.c)</td></tr>
+<tr><td><code>AlojamentoCaracteristica</code>, <code>AlojamentoRegimeAlimentar</code></td><td>2</td><td>Das duas relações N-M do <code>Alojamento</code>: tabelas de ligação criadas pelo EF Core, sem classe nem <code>DbSet</code></td></tr>
+</tbody>
+</table></div>
+<p>Os nomes aparecem com o prefixo <code>dbo.</code>, o schema por omissão do SQL Server (<code>dbo.Hoteis</code>).</p>
+<p class="lbl warn"><strong>Atenção.</strong> Se <code>(localdb)\MSSQLLocalDB</code> não aparecer debaixo de SQL Server, carregar no botão Adicionar SQL Server (o segundo da barra da janela), escrever <code>(localdb)\MSSQLLocalDB</code> como nome do servidor e ligar. Se <code>MyHotelsPWeb</code> não aparecer em Bancos de Dados, a janela já estava aberta antes do <code>Update-Database</code>: clique direito em Bancos de Dados &gt; Atualizar.</p>
+<p class="lbl check"><strong>Verificar.</strong> <code>MyHotelsPWeb</code> está em Bancos de Dados e tem as 22 tabelas da lista.</p>
+<h3 id="3d-comparar-as-tabelas-com-as-classes">3.d Comparar as tabelas com as classes</h3>
+<div class="passo"><div class="k">Alínea da ficha</div><div class="v">3.d</div><div class="k">Ação</div><div class="v"><span class="badge b-ver">Consultar</span></div><div class="k">Onde</div><div class="v">Pesquisador de Objetos do SQL Server &gt; <code>MyHotelsPWeb</code> &gt; Tabelas</div><div class="k">Como lá chegar</div><div class="v">clique direito numa tabela &gt; Exibir Designer (View Designer). Em alternativa, abrir o nó da tabela e depois as pastas Colunas, Chaves e Índices</div></div>
+<p class="lbl what"><strong>O que vamos fazer.</strong> Confirmar que cada tabela tem as colunas, os tipos, os nulos, as chaves e os índices que as classes da Etapa 1 e o MER definem.</p>
+<p>O designer mostra, para cada coluna, o nome, o tipo de dados e se permite nulos. Do lado direito lista as chaves, os índices e as chaves estrangeiras; em baixo, no painel T-SQL, está o <code>CREATE TABLE</code> completo, onde se leem as regras de apagar (<code>ON DELETE CASCADE</code>; quando não diz nada, a base de dados recusa). A ordem das colunas pode variar; o que interessa são os nomes, os tipos e os nulos.</p>
+<p class="lbl warn"><strong>Atenção.</strong> Usar o designer só para ver. Não alterar colunas nem carregar no botão Atualizar que está no topo do designer: isso altera a tabela diretamente na base de dados, sem passar pelas classes, e a próxima migration deixa de bater certo. As alterações à base de dados fazem-se sempre nas classes, seguidas de uma migration nova.</p>
+<h4 id="moradas">Moradas</h4>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Morada</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Rua</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>CodigoPostal</code></td><td>nvarchar(8)</td><td>não</td><td><code>[StringLength(8)]</code> e <code>[Required]</code>. O <code>[RegularExpression]</code> só valida o formulário: não muda a coluna</td></tr>
+<tr><td><code>Localidade</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Distrito</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Pais</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+</tbody>
+</table></div>
+<h4 id="hoteis">Hoteis</h4>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Hotel</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Tipo</code></td><td>nvarchar(20)</td><td>não</td><td><code>string Tipo</code>, sem <code>?</code>, e <code>[StringLength(20)]</code>: não aceita nulos, mesmo sem <code>[Required]</code></td></tr>
+<tr><td><code>Estrelas</code></td><td>int</td><td>não</td><td><code>int Estrelas</code></td></tr>
+<tr><td><code>Descricao</code></td><td>nvarchar(500)</td><td>não</td><td><code>[StringLength(500)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>UrlImagem</code></td><td>nvarchar(200)</td><td>sim</td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+<tr><td><code>Imagem</code></td><td>varbinary(MAX)</td><td>sim</td><td><code>byte[]? Imagem</code></td></tr>
+<tr><td><code>Ativo</code></td><td>bit</td><td>não</td><td><code>bool Ativo</code></td></tr>
+<tr><td><code>MoradaId</code></td><td>int</td><td>não</td><td><code>int MoradaId</code>: chave estrangeira da relação 1-1</td></tr>
+</tbody>
+</table></div>
+<p>Na pasta Índices da tabela está <code>IX_Hoteis_MoradaId</code>, marcado como único: é o que faz desta relação um 1-1 (RN37). Na pasta Chaves, <code>FK_Hoteis_Moradas_MoradaId</code>.</p>
+<h4 id="alojamentos">Alojamentos</h4>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Alojamento</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Descricao</code></td><td>nvarchar(500)</td><td>não</td><td><code>[StringLength(500)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Capacidade</code></td><td>int</td><td>não</td><td><code>int Capacidade</code></td></tr>
+<tr><td><code>NumUnidades</code></td><td>int</td><td>não</td><td><code>int NumUnidades</code></td></tr>
+<tr><td><code>PrecoNoite</code></td><td>decimal(10,2)</td><td>não</td><td><code>[Column(TypeName = "decimal(10,2)")]</code></td></tr>
+<tr><td><code>UrlImagem</code></td><td>nvarchar(200)</td><td>sim</td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+<tr><td><code>Imagem</code></td><td>varbinary(MAX)</td><td>sim</td><td><code>byte[]? Imagem</code></td></tr>
+<tr><td><code>Ativo</code></td><td>bit</td><td>não</td><td><code>bool Ativo</code></td></tr>
+<tr><td><code>HotelId</code></td><td>int</td><td>não</td><td><code>int HotelId</code>: chave estrangeira, relação obrigatória</td></tr>
+<tr><td><code>CategoriaId</code></td><td>int</td><td>não</td><td><code>int CategoriaId</code>: chave estrangeira, relação obrigatória</td></tr>
+<tr><td><code>ModoDisponibilizacaoId</code></td><td>int</td><td>não</td><td><code>int ModoDisponibilizacaoId</code>: chave estrangeira, relação obrigatória</td></tr>
+</tbody>
+</table></div>
+<p>São 12 colunas. <code>hotel</code>, <code>categoria</code>, <code>modoDisponibilizacao</code>, <code>regimes</code> e <code>caracteristicas</code> não aparecem: são navegações. As três chaves estrangeiras estão na pasta Chaves: <code>FK_Alojamentos_Hoteis_HotelId</code>, <code>FK_Alojamentos_Categorias_CategoriaId</code> e <code>FK_Alojamentos_ModosDisponibilizacao_ModoDisponibilizacaoId</code>. No painel T-SQL, nenhuma tem <code>ON DELETE CASCADE</code>: são as regras RN05, RN18 e RN30.</p>
+<h4 id="as-tabelas-de-ligação">As tabelas de ligação</h4>
+<div class="tw"><table>
+<thead><tr><th>Tabela</th><th>Colunas</th><th>Chave primária</th><th>Chaves estrangeiras</th></tr></thead>
+<tbody>
+<tr><td><code>AlojamentoRegimeAlimentar</code></td><td><code>alojamentosId</code>, <code>regimesId</code> (int, sem nulos)</td><td>as duas colunas</td><td>para <code>Alojamentos</code> e para <code>RegimesAlimentares</code>, ambas <code>ON DELETE CASCADE</code></td></tr>
+<tr><td><code>AlojamentoCaracteristica</code></td><td><code>alojamentosId</code>, <code>caracteristicasId</code> (int, sem nulos)</td><td>as duas colunas</td><td>para <code>Alojamentos</code> e para <code>Caracteristicas</code>, ambas <code>ON DELETE CASCADE</code></td></tr>
+</tbody>
+</table></div>
+<h4 id="categorias-caracteristicas-modosdisponibilizacao-regimesalimentares-e-campanhas">Categorias, Caracteristicas, ModosDisponibilizacao, RegimesAlimentares e Campanhas</h4>
+<p><strong>Categorias</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Categoria</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Descricao</code></td><td>nvarchar(200)</td><td>sim</td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+<tr><td><code>Ativo</code></td><td>bit</td><td>não</td><td><code>bool Ativo</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>Caracteristicas</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Caracteristica</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Ativo</code></td><td>bit</td><td>não</td><td><code>bool Ativo</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>ModosDisponibilizacao</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>ModoDisponibilizacao</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Descricao</code></td><td>nvarchar(200)</td><td>sim</td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>RegimesAlimentares</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>RegimeAlimentar</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Descricao</code></td><td>nvarchar(200)</td><td>sim</td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+<tr><td><code>Percentagem</code></td><td>decimal(5,2)</td><td>não</td><td><code>[Column(TypeName = "decimal(5,2)")]</code></td></tr>
+<tr><td><code>Ativo</code></td><td>bit</td><td>não</td><td><code>bool Ativo</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>Campanhas</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Campanha</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>Nome</code></td><td>nvarchar(100)</td><td>não</td><td><code>[StringLength(100)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>Descricao</code></td><td>nvarchar(200)</td><td>sim</td><td><code>[StringLength(200)]</code>, sem <code>[Required]</code></td></tr>
+<tr><td><code>Percentagem</code></td><td>decimal(5,2)</td><td>não</td><td><code>[Column(TypeName = "decimal(5,2)")]</code></td></tr>
+<tr><td><code>DataInicio</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataInicio</code></td></tr>
+<tr><td><code>DataFim</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataFim</code></td></tr>
+<tr><td><code>Ativo</code></td><td>bit</td><td>não</td><td><code>bool Ativo</code></td></tr>
+<tr><td><code>HotelId</code></td><td>int</td><td>não</td><td><code>int HotelId</code>: chave estrangeira, relação obrigatória</td></tr>
+</tbody>
+</table></div>
+<p>É aqui que se confirma a nota da ficha 3 sobre <code>string?</code> e <code>[Required]</code>: em <code>Categorias</code>, <code>Nome</code> e <code>Descricao</code> são ambos <code>string?</code> na classe, mas só <code>Nome</code> tem <code>[Required]</code>, e só <code>Nome</code> ficou sem nulos. Em <code>Campanhas</code>, a chave <code>FK_Campanhas_Hoteis_HotelId</code> é a única das nossas chaves para <code>Hoteis</code> com <code>ON DELETE CASCADE</code>.</p>
+<h4 id="reservas-linhasreserva-pagamentos-e-faturas">Reservas, LinhasReserva, Pagamentos e Faturas</h4>
+<p><strong>Reservas</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Reserva</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>ClienteId</code></td><td>nvarchar(450)</td><td>não</td><td><code>string? ClienteId</code> com <code>[Required]</code>: chave estrangeira para <code>AspNetUsers</code>, cujo <code>Id</code> é <code>nvarchar(450)</code></td></tr>
+<tr><td><code>HotelId</code></td><td>int</td><td>não</td><td><code>int HotelId</code>: chave estrangeira, relação obrigatória</td></tr>
+<tr><td><code>MoradaFaturacaoId</code></td><td>int</td><td>não</td><td><code>int MoradaFaturacaoId</code>: chave estrangeira da relação 1-1</td></tr>
+<tr><td><code>DataCriacao</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataCriacao</code></td></tr>
+<tr><td><code>DataEntrada</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataEntrada</code></td></tr>
+<tr><td><code>DataSaida</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataSaida</code></td></tr>
+<tr><td><code>Estado</code></td><td>nvarchar(20)</td><td>não</td><td><code>string Estado</code>, sem <code>?</code>, e <code>[StringLength(20)]</code></td></tr>
+<tr><td><code>Total</code></td><td>decimal(10,2)</td><td>não</td><td><code>[Column(TypeName = "decimal(10,2)")]</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>LinhasReserva</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>LinhaReserva</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>ReservaId</code></td><td>int</td><td>não</td><td><code>int ReservaId</code>: chave estrangeira, relação obrigatória</td></tr>
+<tr><td><code>AlojamentoId</code></td><td>int</td><td>não</td><td><code>int AlojamentoId</code>: chave estrangeira, relação obrigatória</td></tr>
+<tr><td><code>RegimeAlimentarId</code></td><td>int</td><td>não</td><td><code>int RegimeAlimentarId</code>: chave estrangeira, relação obrigatória</td></tr>
+<tr><td><code>Quantidade</code></td><td>int</td><td>não</td><td><code>int Quantidade</code></td></tr>
+<tr><td><code>NumHospedes</code></td><td>int</td><td>não</td><td><code>int NumHospedes</code></td></tr>
+<tr><td><code>Subtotal</code></td><td>decimal(10,2)</td><td>não</td><td><code>[Column(TypeName = "decimal(10,2)")]</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>Pagamentos</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Pagamento</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>ReservaId</code></td><td>int</td><td>não</td><td><code>int ReservaId</code>: chave estrangeira da relação 1-1</td></tr>
+<tr><td><code>Metodo</code></td><td>nvarchar(20)</td><td>não</td><td><code>[StringLength(20)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>DataPagamento</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataPagamento</code></td></tr>
+<tr><td><code>Estado</code></td><td>nvarchar(20)</td><td>não</td><td><code>string Estado</code>, sem <code>?</code>, e <code>[StringLength(20)]</code></td></tr>
+</tbody>
+</table></div>
+<p><strong>Faturas</strong></p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>Fatura</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Id</code></td><td>int</td><td>não</td><td><code>int Id</code>: chave primária</td></tr>
+<tr><td><code>ReservaId</code></td><td>int</td><td>não</td><td><code>int ReservaId</code>: chave estrangeira da relação 1-1</td></tr>
+<tr><td><code>Numero</code></td><td>int</td><td>não</td><td><code>int Numero</code></td></tr>
+<tr><td><code>DataEmissao</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataEmissao</code></td></tr>
+<tr><td><code>NomeCliente</code></td><td>nvarchar(200)</td><td>não</td><td><code>[StringLength(200)]</code> e <code>[Required]</code></td></tr>
+<tr><td><code>NIFCliente</code></td><td>bigint</td><td>não</td><td><code>long NIFCliente</code></td></tr>
+</tbody>
+</table></div>
+<p>Os índices únicos <code>IX_Reservas_MoradaFaturacaoId</code>, <code>IX_Pagamentos_ReservaId</code> e <code>IX_Faturas_ReservaId</code> são os das três relações 1-1 destas tabelas. As chaves de <code>LinhasReserva</code>, <code>Pagamentos</code> e <code>Faturas</code> para <code>Reservas</code> têm <code>ON DELETE CASCADE</code>; as restantes não.</p>
+<h4 id="aspnetusers">AspNetUsers</h4>
+<p>A tabela tem as 15 colunas do Identity (<code>Id</code>, <code>UserName</code>, <code>Email</code>, <code>PasswordHash</code> e as restantes) e, além delas, uma coluna por cada propriedade do <code>ApplicationUser</code> (Etapa 1, alínea 3.d):</p>
+<div class="tw"><table>
+<thead><tr><th>Coluna</th><th>Tipo de dados</th><th>Permite nulos</th><th>Vem de (classe <code>ApplicationUser</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>Nome</code>, <code>Apelido</code></td><td>nvarchar(100)</td><td>sim</td><td><code>[StringLength(100)]</code></td></tr>
+<tr><td><code>MoradaId</code></td><td>int</td><td>sim</td><td><code>int? MoradaId</code>: chave estrangeira da relação 1-1, opcional</td></tr>
+<tr><td><code>Telemovel</code></td><td>nvarchar(MAX)</td><td>sim</td><td>O <code>[RegularExpression]</code> só valida o formulário: não muda a coluna</td></tr>
+<tr><td><code>NIF</code></td><td>bigint</td><td>sim</td><td><code>long? NIF</code>. O <code>[validarNIF]</code> só valida o formulário</td></tr>
+<tr><td><code>MatriculaVeiculo</code></td><td>nvarchar(8)</td><td>sim</td><td><code>[StringLength(8)]</code></td></tr>
+<tr><td><code>Fotografia</code></td><td>varbinary(MAX)</td><td>sim</td><td><code>byte[]? Fotografia</code></td></tr>
+<tr><td><code>Estado</code></td><td>nvarchar(20)</td><td>não</td><td><code>string Estado</code>, sem <code>?</code>, e <code>[StringLength(20)]</code></td></tr>
+<tr><td><code>DataRegisto</code></td><td>datetime2(7)</td><td>não</td><td><code>DateTime DataRegisto</code></td></tr>
+</tbody>
+</table></div>
+<p>No projeto criado para SQL Server LocalDB, estas 9 colunas aparecem no fim da tabela, depois das do Identity, porque foram acrescentadas com <code>AddColumn</code>. No projeto criado para SQLite aparecem logo a seguir a <code>Id</code>. As duas formas estão certas. O índice <code>IX_AspNetUsers_MoradaId</code> é único e tem um filtro (<code>WHERE [MoradaId] IS NOT NULL</code>): vários utilizadores podem não ter morada, mas dois não podem ter a mesma.</p>
+<h4 id="__efmigrationshistory">__EFMigrationsHistory</h4>
+<p>Clique direito em <code>dbo.__EFMigrationsHistory</code> &gt; Exibir Dados (View Data). A tabela tem duas colunas, <code>MigrationId</code> e <code>ProductVersion</code> (a versão do Entity Framework, 8.0.x), e uma linha por migration aplicada: duas no projeto criado para SQL Server LocalDB (<code>00000000000000_CreateIdentitySchema</code> e <code>&lt;data&gt;_BDInicial</code>), uma no projeto criado para SQLite.</p>
+<h4 id="as-16-relações-do-mer-na-base-de-dados">As 16 relações do MER, na base de dados</h4>
+<div class="tw"><table>
+<thead><tr><th>Relação do MER</th><th>Chave estrangeira</th><th>Índice</th><th>Ao apagar o lado 1</th></tr></thead>
+<tbody>
+<tr><td>Hotel disponibiliza Alojamento (1-N)</td><td><code>FK_Alojamentos_Hoteis_HotelId</code></td><td><code>IX_Alojamentos_HotelId</code></td><td>recusa</td></tr>
+<tr><td>Hotel tem Campanha (1-N)</td><td><code>FK_Campanhas_Hoteis_HotelId</code></td><td><code>IX_Campanhas_HotelId</code></td><td>cascata</td></tr>
+<tr><td>Categoria classifica Alojamento (1-N)</td><td><code>FK_Alojamentos_Categorias_CategoriaId</code></td><td><code>IX_Alojamentos_CategoriaId</code></td><td>recusa</td></tr>
+<tr><td>ModoDisponibilizacao define Alojamento (1-N)</td><td><code>FK_Alojamentos_ModosDisponibilizacao_ModoDisponibilizacaoId</code></td><td><code>IX_Alojamentos_ModoDisponibilizacaoId</code></td><td>recusa</td></tr>
+<tr><td>ApplicationUser efetua Reserva (1-N)</td><td><code>FK_Reservas_AspNetUsers_ClienteId</code></td><td><code>IX_Reservas_ClienteId</code></td><td>recusa</td></tr>
+<tr><td>Hotel recebe Reserva (1-N)</td><td><code>FK_Reservas_Hoteis_HotelId</code></td><td><code>IX_Reservas_HotelId</code></td><td>recusa</td></tr>
+<tr><td>Reserva contém LinhaReserva (1-N)</td><td><code>FK_LinhasReserva_Reservas_ReservaId</code></td><td><code>IX_LinhasReserva_ReservaId</code></td><td>cascata</td></tr>
+<tr><td>Alojamento é reservado em LinhaReserva (1-N)</td><td><code>FK_LinhasReserva_Alojamentos_AlojamentoId</code></td><td><code>IX_LinhasReserva_AlojamentoId</code></td><td>recusa</td></tr>
+<tr><td>RegimeAlimentar é escolhido em LinhaReserva (1-N)</td><td><code>FK_LinhasReserva_RegimesAlimentares_RegimeAlimentarId</code></td><td><code>IX_LinhasReserva_RegimeAlimentarId</code></td><td>recusa</td></tr>
+<tr><td>Alojamento oferece RegimeAlimentar (N-M)</td><td>as duas da tabela <code>AlojamentoRegimeAlimentar</code></td><td>chave primária composta</td><td>cascata (só a ligação)</td></tr>
+<tr><td>Alojamento possui Caracteristica (N-M)</td><td>as duas da tabela <code>AlojamentoCaracteristica</code></td><td>chave primária composta</td><td>cascata (só a ligação)</td></tr>
+<tr><td>Morada localiza Hotel (1-1)</td><td><code>FK_Hoteis_Moradas_MoradaId</code></td><td><code>IX_Hoteis_MoradaId</code>, único</td><td>recusa</td></tr>
+<tr><td>Morada serve de faturação a Reserva (1-1)</td><td><code>FK_Reservas_Moradas_MoradaFaturacaoId</code></td><td><code>IX_Reservas_MoradaFaturacaoId</code>, único</td><td>recusa</td></tr>
+<tr><td>ApplicationUser possui Morada (1-1)</td><td><code>FK_AspNetUsers_Moradas_MoradaId</code></td><td><code>IX_AspNetUsers_MoradaId</code>, único e filtrado</td><td>recusa</td></tr>
+<tr><td>Pagamento paga Reserva (1-1)</td><td><code>FK_Pagamentos_Reservas_ReservaId</code></td><td><code>IX_Pagamentos_ReservaId</code>, único</td><td>cascata</td></tr>
+<tr><td>Reserva gera Fatura (1-1)</td><td><code>FK_Faturas_Reservas_ReservaId</code></td><td><code>IX_Faturas_ReservaId</code>, único</td><td>cascata</td></tr>
+</tbody>
+</table></div>
+<p class="lbl why"><strong>Porquê.</strong> É esta a cadeia que a ficha descreve: do modelo de dados (MER) chegou-se às classes C# na Etapa 1; das classes, com as migrations, chegou-se às tabelas. Cada tabela corresponde a uma classe registada no contexto, cada coluna a uma propriedade, e as chaves estrangeiras às relações. Por isso, para corrigir a base de dados, corrige-se a classe.</p>
+<p class="lbl check"><strong>Verificar.</strong> As tabelas têm as colunas das listas acima, os cinco índices únicos existem e só as chaves marcadas com "cascata" têm <code>ON DELETE CASCADE</code>. Se faltar uma tabela ou uma coluna, ou se um tipo, um nulo ou uma regra não bater certo, corrigir a classe ou o contexto da Etapa 1 e refazer a migration (secção 3).</p>
+<h2 id="2-primeiro-arranque-os-dados-iniciais-complemento">2. Primeiro arranque: os dados iniciais (complemento)</h2>
+<div class="passo"><div class="k">Alínea da ficha</div><div class="v">complemento: a ficha não o pede</div><div class="k">Ação</div><div class="v"><span class="badge b-executar">Executar</span> <span class="badge b-ver">Consultar</span></div><div class="k">Onde</div><div class="v">o projeto <code>GestaoHoteis</code>, e depois o Pesquisador de Objetos do SQL Server</div><div class="k">Como lá chegar</div><div class="v">tecla F5. Depois de a aplicação abrir, parar com Shift+F5</div></div>
+<p class="lbl what"><strong>O que vamos fazer.</strong> Executar a aplicação pela primeira vez desde a alínea 3.k da Etapa 1 e ver os dados que ela cria sozinha no arranque.</p>
+<p>Com a base de dados criada, o bloco dos dados iniciais do <code>Program.cs</code> (Etapa 1, alínea 3.k) já consegue ler e escrever. A aplicação arranca e abre a página "Hello, world!", com o mesmo menu do fim da Etapa 1. Antes de abrir a página, o método <code>Inicializacao.CriaDadosIniciais</code> criou os três roles e o administrador.</p>
+<p>Para confirmar, no Pesquisador de Objetos do SQL Server, clique direito em cada tabela &gt; Exibir Dados (View Data):</p>
+<div class="tw"><table>
+<thead><tr><th>Tabela</th><th>O que deve ter</th><th>Repare-se</th></tr></thead>
+<tbody>
+<tr><td><code>AspNetRoles</code></td><td>Três linhas: Administrador, Funcionario e Cliente</td><td><code>NormalizedName</code> é o nome em maiúsculas, usado nas pesquisas</td></tr>
+<tr><td><code>AspNetUsers</code></td><td>Uma linha: <code>admin@localhost.com</code>, com <code>Nome</code> = Administrador e <code>Apelido</code> = Local</td><td><code>PasswordHash</code> não tem a palavra-passe, tem o hash dela. <code>EmailConfirmed</code> é True. <code>Estado</code> é Ativo. <code>MoradaId</code> é NULL: o administrador não tem morada</td></tr>
+<tr><td><code>AspNetUserRoles</code></td><td>Uma linha, que liga o <code>Id</code> do administrador ao <code>Id</code> do role Administrador</td><td>É assim que se guarda "este utilizador tem este role"</td></tr>
+</tbody>
+</table></div>
+<p>Executar a aplicação uma segunda vez e voltar a ver as tabelas: continuam com as mesmas linhas. O método só cria o que ainda não existe (Etapa 1, alínea 3.g). As nossas 14 tabelas estão vazias: os primeiros dados entram na Etapa 3.</p>
+<p class="lbl why"><strong>Porquê.</strong> A etapa termina com a base de dados criada, mas vazia. Fazer este arranque aqui fecha o que ficou em aberto na Etapa 1, e confirma que o arranque, a connection string e as tabelas do Identity estão certos antes das páginas da Etapa 3.</p>
+<p class="lbl note"><strong>Nota.</strong> O login com estas credenciais (<code>admin@localhost.com</code>, palavra-passe <code>Is3C..00</code>) faz-se na Etapa 3.</p>
+<p class="lbl check"><strong>Verificar.</strong> A aplicação abre sem exceções. <code>AspNetRoles</code> tem três linhas e <code>AspNetUsers</code> tem o administrador.</p>
+<h2 id="3-quando-a-base-de-dados-não-sai-certa">3. Quando a base de dados não sai certa</h2>
+<p>Se a alínea 3.d mostrar diferenças, o erro está nas classes ou no contexto da Etapa 1, e não na base de dados. Corrige-se o código e refaz-se a migration. A forma de a refazer depende de o <code>Update-Database</code> já ter sido executado.</p>
+<h3 id="31-antes-do-update-database">3.1 Antes do Update-Database</h3>
+<p>A migration foi criada mas ainda não foi aplicada (por exemplo, a verificação do passo 3.a falhou):</p>
+<div class="hl"><pre><span></span><code><span class="nb">Remove-Migration</span>
+</code></pre></div>
+<p>Depois, corrigir as classes, compilar, e voltar a correr <code>Add-Migration BDInicial</code>.</p>
+<p class="lbl why"><strong>Porquê.</strong> O <code>Remove-Migration</code> apaga a última migration e repõe a fotografia (<code>ApplicationDbContextModelSnapshot.cs</code>) como estava antes dela. Apagar os ficheiros à mão não chega: a fotografia ficava com o modelo errado, e a migration seguinte saía incompleta.</p>
+<h3 id="32-depois-do-update-database">3.2 Depois do Update-Database</h3>
+<p>A migration já foi aplicada e a base de dados existe. Primeiro apaga-se a base de dados, depois a migration:</p>
+<div class="hl"><pre><span></span><code><span class="n">Drop-Database</span>
+<span class="nb">Remove-Migration</span>
+</code></pre></div>
+<p>O <code>Drop-Database</code> pede confirmação antes de apagar: responder que sim. Depois, corrigir as classes, compilar, e voltar a correr os dois comandos:</p>
+<div class="hl"><pre><span></span><code><span class="nb">Add-Migration</span> <span class="n">BDInicial</span>
+<span class="nb">Update-Database</span>
+</code></pre></div>
+<p class="lbl why"><strong>Porquê.</strong> O <code>Remove-Migration</code> recusa apagar uma migration que já está aplicada na base de dados (a mensagem diz <code>has already been applied to the database</code>). Depois de apagada a base de dados, a migration deixa de estar aplicada e já pode ser removida.</p>
+<p class="lbl warn"><strong>Atenção.</strong> No projeto criado para SQL Server LocalDB, o <code>Remove-Migration</code> só remove a última migration, a <code>BDInicial</code>. A <code>00000000000000_CreateIdentitySchema</code> fica, e é assim que deve ser. Não a apagar.</p>
+<p class="lbl note"><strong>Nota.</strong> Isto só se faz agora, enquanto a base de dados não tem dados que interessem. Mais tarde, para alterar uma base de dados com dados, cria-se uma migration nova (<code>Add-Migration</code> com outro nome) e aplica-se com <code>Update-Database</code>, sem apagar nada. É o que acontece na Etapa 3.</p>
+<h3 id="33-o-que-não-fazer">3.3 O que não fazer</h3>
+<ul>
+<li>Alterar tabelas ou colunas no designer do Visual Studio: a base de dados deixa de corresponder às classes e às migrations.</li>
+<li>Editar os ficheiros da pasta das migrations à mão.</li>
+<li>Apagar ficheiros de migrations no Gerenciador de Soluções em vez de usar <code>Remove-Migration</code>.</li>
+<li>Em grupo: duas pessoas a gerar migrations ao mesmo tempo. Uma gera e envia para o repositório; as outras recebem e correm <code>Update-Database</code>.</li>
+</ul>
+<h2 id="4-ponto-de-situação">4. Ponto de situação</h2>
+<h3 id="41-como-fica-o-projeto">4.1 Como fica o projeto</h3>
+<p>Nenhum ficheiro escrito por nós mudou. O que há de novo são os ficheiros da migration. No projeto criado para SQL Server LocalDB:</p>
+<div class="hl"><pre><span></span><code>GestaoHoteis/                      (pasta do projeto)
+└── Data/
+    └── Migrations/
+        ├── 00000000000000_CreateIdentitySchema.cs            do template (Etapa 1)
+        ├── 00000000000000_CreateIdentitySchema.Designer.cs   do template (Etapa 1)
+        ├── &lt;data&gt;_BDInicial.cs                               NOVO (3.a)
+        ├── &lt;data&gt;_BDInicial.Designer.cs                      NOVO (3.a)
+        └── ApplicationDbContextModelSnapshot.cs              ALTERADO (3.a)
+</code></pre></div>
+<p>No projeto criado para SQLite:</p>
+<div class="hl"><pre><span></span><code>GestaoHoteis/                      (pasta do projeto)
+└── Migrations/                                               NOVA (3.a)
+    ├── &lt;data&gt;_BDInicial.cs                                   NOVO
+    ├── &lt;data&gt;_BDInicial.Designer.cs                          NOVO
+    └── ApplicationDbContextModelSnapshot.cs                  NOVO
+</code></pre></div>
+<p>Fora do projeto, no LocalDB: a base de dados <code>MyHotelsPWeb</code>, com 22 tabelas, e os dados iniciais (três roles e o administrador), se a secção 2 tiver sido feita.</p>
+<h3 id="42-lista-de-verificação">4.2 Lista de verificação</h3>
+<ol>
+<li>O <code>Update-Database</code> terminou com <code>Done.</code>, sem linhas a vermelho.</li>
+<li>A pasta das migrations tem <code>&lt;data&gt;_BDInicial.cs</code>, <code>&lt;data&gt;_BDInicial.Designer.cs</code> e <code>ApplicationDbContextModelSnapshot.cs</code>.</li>
+<li>No Pesquisador de Objetos do SQL Server, <code>(localdb)\MSSQLLocalDB</code> &gt; Bancos de Dados tem <code>MyHotelsPWeb</code>.</li>
+<li><code>MyHotelsPWeb</code> tem 22 tabelas: <code>__EFMigrationsHistory</code>, as sete <code>AspNet...</code>, as doze das entidades e as duas de ligação.</li>
+<li><code>Alojamentos</code> tem 12 colunas, com <code>HotelId</code>, <code>CategoriaId</code> e <code>ModoDisponibilizacaoId</code> sem nulos.</li>
+<li><code>Categorias</code> tem <code>Nome</code> sem nulos e <code>Descricao</code> com nulos.</li>
+<li><code>AspNetUsers</code> tem as 9 colunas do <code>ApplicationUser</code>, de <code>Nome</code> a <code>DataRegisto</code>.</li>
+<li>Existem os cinco índices únicos das relações 1-1: em <code>Hoteis</code>, <code>Reservas</code>, <code>AspNetUsers</code>, <code>Pagamentos</code> e <code>Faturas</code>.</li>
+<li><code>__EFMigrationsHistory</code> tem a linha da <code>BDInicial</code> (e a da <code>CreateIdentitySchema</code>, no projeto criado para SQL Server LocalDB).</li>
+<li>A aplicação arranca com F5 (secção 2).</li>
+<li><code>AspNetRoles</code> tem Administrador, Funcionario e Cliente, e <code>AspNetUsers</code> tem <code>admin@localhost.com</code>, com <code>Estado</code> Ativo (secção 2).</li>
+</ol>
+<h3 id="43-erros-frequentes">4.3 Erros frequentes</h3>
+<div class="tw"><table>
+<thead><tr><th>Sintoma</th><th>Causa</th><th>Solução</th></tr></thead>
+<tbody>
+<tr><td>"O termo 'Add-Migration' não é reconhecido" (ou "The term 'Add-Migration' is not recognized")</td><td>Falta o pacote <code>Microsoft.EntityFrameworkCore.Tools</code> no projeto</td><td>Instalar o pacote no Console do Gerenciador de Pacotes, com <code>Install-Package</code> e <code>-Version</code> seguido da versão dos outros pacotes do Entity Framework no <code>.csproj</code> (como na alínea 3.e, passo 2, da Etapa 1)</td></tr>
+<tr><td><code>Build failed.</code> no <code>Add-Migration</code> ou no <code>Update-Database</code></td><td>O projeto tem erros de compilação</td><td>Ver a Lista de Erros e corrigir (Etapa 1, secção 4.3). Depois repetir o comando</td></tr>
+<tr><td>No <code>Add-Migration</code>: <code>The entity type 'IdentityUserLogin&lt;string&gt;' requires a primary key</code></td><td>Falta <code>base.OnModelCreating(builder);</code> no início do <code>OnModelCreating</code></td><td>Etapa 1, alínea 3.c, passo 2</td></tr>
+<tr><td>No <code>Add-Migration</code>: <code>Unable to determine the relationship represented by navigation ...</code></td><td>Uma navegação tem outro nome, ou falta a navegação do outro lado</td><td>Comparar a classe indicada na mensagem com o código da Etapa 1, alínea 3.b</td></tr>
+<tr><td>A migration tem colunas a mais, como <code>HotelId1</code></td><td>Num <code>WithMany()</code> do <code>OnModelCreating</code> falta a coleção (<code>h =&gt; h.alojamentos</code>)</td><td>Secção 3.1: <code>Remove-Migration</code>, corrigir o contexto, <code>Add-Migration BDInicial</code></td></tr>
+<tr><td>O método <code>Up</code> da migration está vazio, ou faltam tabelas</td><td>O <code>ApplicationDbContext</code> não tem os doze <code>DbSet</code> (Etapa 1, alínea 3.c)</td><td>Secção 3.1</td></tr>
+<tr><td>"The name 'BDInicial' is used by an existing migration"</td><td>O <code>Add-Migration</code> foi corrido duas vezes</td><td>Não é preciso repetir. Para refazer a migration: secção 3</td></tr>
+<tr><td>No <code>Update-Database</code>: <code>Introducing FOREIGN KEY constraint ... may cause cycles or multiple cascade paths</code></td><td>Falta um <code>OnDelete(DeleteBehavior.Restrict)</code> no <code>OnModelCreating</code></td><td>Etapa 1, alínea 3.c, passo 2; depois, secção 3.2</td></tr>
+<tr><td>No <code>Update-Database</code>: "A network-related or instance-specific error", ou "error: 50" e "Local Database Runtime error"</td><td>O LocalDB não está instalado, ou não arrancou a tempo</td><td>Repetir o comando uma vez. Se persistir: <code>sqllocaldb info</code> e, se preciso, <code>sqllocaldb start MSSQLLocalDB</code> numa janela do PowerShell; Etapa 1, secção 0.6</td></tr>
+<tr><td>"There is already an object named 'AspNetRoles' in the database"</td><td>A base de dados já tinha tabelas de uma tentativa anterior</td><td>Secção 3.2: <code>Drop-Database</code> e voltar a correr <code>Update-Database</code></td></tr>
+<tr><td>No <code>Remove-Migration</code>: "has already been applied to the database"</td><td>A migration já foi aplicada</td><td>Secção 3.2: <code>Drop-Database</code> primeiro</td></tr>
+<tr><td><code>MyHotelsPWeb</code> não aparece no Pesquisador de Objetos do SQL Server</td><td>A janela estava aberta antes do <code>Update-Database</code>, ou a connection string tem outro nome de base de dados</td><td>Clique direito em Bancos de Dados &gt; Atualizar. Se continuar a faltar, confirmar <code>Database=MyHotelsPWeb</code> no <code>appsettings.json</code></td></tr>
+<tr><td>Aparece uma base de dados <code>aspnet-GestaoHoteis-...</code> em vez da <code>MyHotelsPWeb</code></td><td>A connection string não foi alterada na Etapa 1</td><td>Corrigir o <code>appsettings.json</code> e voltar a correr <code>Update-Database</code>. A outra base de dados pode ser apagada no Pesquisador (clique direito &gt; Excluir)</td></tr>
+<tr><td>Ao executar (F5): <code>SqlException</code>, <code>Cannot open database "MyHotelsPWeb"</code></td><td>O <code>Update-Database</code> não correu, ou falhou</td><td>Passo 3.b</td></tr>
+<tr><td>Ao executar (F5): "Invalid column name" ou "Invalid object name"</td><td>A base de dados não corresponde às classes</td><td>Secção 3.2</td></tr>
+</tbody>
+</table></div>
+<h3 id="44-o-que-vem-a-seguir">4.4 O que vem a seguir</h3>
+<p>Na Etapa 3 (ficha 5) melhora-se o modelo com validações e regras na base de dados, o que dá a segunda migration: essa já não cria, altera. Depois vêm os dados de exemplo e as páginas: Home, Sobre, o layout e o menu, e as páginas de gestão do catálogo, geradas pelo Visual Studio a partir das classes da pasta <code>Entities</code> (scaffolding). Faz-se login como administrador e os registos ficam guardados nas tabelas criadas hoje.</p>
+</main>
+</div>
+<script>
+document.querySelectorAll('.hl').forEach(function (box) {
+  var wrap = document.createElement('div');
+  wrap.className = 'codebox';
+  box.parentNode.insertBefore(wrap, box);
+  wrap.appendChild(box);
+  var b = document.createElement('button');
+  b.className = 'copy'; b.type = 'button'; b.textContent = 'Copiar';
+  b.addEventListener('click', function () {
+    var txt = box.querySelector('pre').textContent.replace(/\n$/, '');
+    var done = function () { b.textContent = 'Copiado'; b.classList.add('ok'); setTimeout(function () { b.textContent = 'Copiar'; b.classList.remove('ok'); }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(txt).then(done);
+    } else {
+      var ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  });
+  wrap.appendChild(b);
+});
+var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+var heads = links.map(function (a) { return document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1))); });
+function mark() {
+  var i = heads.length - 1;
+  while (i > 0 && (!heads[i] || heads[i].getBoundingClientRect().top > 80)) i--;
+  links.forEach(function (a, k) { a.classList.toggle('active', k === i); });
+}
+document.addEventListener('scroll', mark, { passive: true }); mark();
+</script>
+</body>
+</html>

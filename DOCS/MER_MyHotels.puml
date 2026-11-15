@@ -1,0 +1,225 @@
+@startuml MER_MyHotels
+' MyHotels — Modelo Entidade-Relacionamento
+' Programação Web 2026/2027 — ISEC
+
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 80
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam roundCorner 6
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #3B5B7A
+  HeaderBackgroundColor #DCE7F2
+}
+skinparam enum {
+  BackgroundColor #F7F7F7
+  BorderColor #999999
+}
+skinparam ArrowColor #3B5B7A
+
+' ============ Utilizadores e Moradas ============
+
+entity "ApplicationUser" as user <<IdentityUser>> {
+  * Id : string <<PK>>
+  --
+  * Email : string
+  * UserName : string
+  * PasswordHash : string
+  PhoneNumber : string
+  ..
+  * Nome : string
+  * Estado : EstadoUtilizador
+  * DataRegisto : DateTime
+  NIF : string
+  MatriculaVeiculo : string
+  MoradaId : int <<FK, UQ>>
+}
+
+entity "Morada" as morada {
+  * Id : int <<PK>>
+  --
+  * Rua : string
+  * CodigoPostal : string
+  * Localidade : string
+  * Distrito : string
+  * Pais : string
+}
+
+' ============ Catálogo ============
+
+entity "Hotel" as hotel {
+  * Id : int <<PK>>
+  --
+  * Nome : string
+  * Tipo : TipoHotel
+  * Estrelas : int
+  * Descricao : string
+  * Imagem : byte[]
+  * Ativo : bool
+  * MoradaId : int <<FK>>
+}
+
+entity "Categoria" as categoria {
+  * Id : int <<PK>>
+  --
+  * Nome : string
+  Descricao : string
+  * Ativo : bool
+}
+
+entity "ModoDisponibilizacao" as modo {
+  * Id : int <<PK>>
+  --
+  * Nome : string
+  Descricao : string
+}
+
+entity "Caracteristica" as caracteristica {
+  * Id : int <<PK>>
+  --
+  * Nome : string
+  * Ativo : bool
+}
+
+entity "Alojamento" as alojamento {
+  * Id : int <<PK>>
+  --
+  * HotelId : int <<FK>>
+  * CategoriaId : int <<FK>>
+  * ModoDisponibilizacaoId : int <<FK>>
+  * Nome : string
+  * Descricao : string
+  * Capacidade : int
+  * NumUnidades : int
+  * PrecoNoite : decimal
+  * Imagem : byte[]
+  * Ativo : bool
+}
+
+entity "RegimeAlimentar" as regime {
+  * Id : int <<PK>>
+  --
+  * Nome : string
+  Descricao : string
+  * Percentagem : decimal
+  * Ativo : bool
+}
+
+entity "Campanha" as campanha {
+  * Id : int <<PK>>
+  --
+  * HotelId : int <<FK>>
+  * Nome : string
+  Descricao : string
+  * Percentagem : decimal
+  * DataInicio : DateTime
+  * DataFim : DateTime
+  * Ativo : bool
+}
+
+' ============ Reservas ============
+
+entity "Reserva" as reserva {
+  * Id : int <<PK>>
+  --
+  * ClienteId : string <<FK>>
+  * HotelId : int <<FK>>
+  * MoradaFaturacaoId : int <<FK, UQ>>
+  * DataCriacao : DateTime
+  * DataEntrada : DateTime
+  * DataSaida : DateTime
+  * Estado : EstadoReserva
+  * Total : decimal
+}
+
+entity "LinhaReserva" as linhaReserva {
+  * Id : int <<PK>>
+  --
+  * ReservaId : int <<FK>>
+  * AlojamentoId : int <<FK>>
+  * RegimeAlimentarId : int <<FK>>
+  * Quantidade : int
+  * NumHospedes : int
+  * Subtotal : decimal
+}
+
+' ============ Pagamento e Faturação ============
+
+entity "Pagamento" as pagamento {
+  * Id : int <<PK>>
+  --
+  * ReservaId : int <<FK, UQ>>
+  * Metodo : MetodoPagamento
+  * DataPagamento : DateTime
+  * Estado : EstadoPagamento
+}
+
+entity "Fatura" as fatura {
+  * Id : int <<PK>>
+  --
+  * ReservaId : int <<FK, UQ>>
+  * Numero : int <<UQ>>
+  * DataEmissao : DateTime
+  * NomeCliente : string
+  * NIFCliente : string
+}
+
+' ============ Enumerações ============
+
+enum EstadoUtilizador {
+  Pendente
+  Ativo
+  Inativo
+}
+
+enum TipoHotel {
+  Hotel
+  Aparthotel
+}
+
+enum EstadoReserva {
+  Pendente
+  Confirmada
+  Rejeitada
+  Expedida
+}
+
+enum MetodoPagamento {
+  Cartao
+  MBWay
+  Multibanco
+}
+
+enum EstadoPagamento {
+  Pago
+  Reembolsado
+}
+
+' ============ Relações ============
+' Cada relação lê-se no sentido da seta: Entidade A <verbo> Entidade B
+
+user           "1" -- "1" morada         : possui >
+morada         "1" -- "1" hotel          : localiza >
+hotel          "1" -- "N" alojamento     : disponibiliza >
+hotel          "1" -- "N" campanha       : tem >
+categoria      "1" -- "N" alojamento     : classifica >
+modo           "1" -- "N" alojamento     : define >
+alojamento     "N" -- "M" regime         : oferece >
+alojamento     "N" -- "M" caracteristica : possui >
+user           "1" -- "N" reserva        : efetua >
+hotel          "1" -- "N" reserva        : recebe >
+morada         "1" -- "1" reserva        : serve de faturação a >
+reserva        "1" -- "N" linhaReserva   : contém >
+alojamento     "1" -- "N" linhaReserva   : é reservado em >
+regime         "1" -- "N" linhaReserva   : é escolhido em >
+reserva        "1" -- "1" pagamento      : < paga
+reserva        "1" -- "1" fatura         : gera >
+
+' Ligação invisível, serve apenas para arrumar o desenho
+reserva -[hidden]down- linhaReserva
+
+@enduml
