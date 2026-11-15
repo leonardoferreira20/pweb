@@ -1,59 +1,98 @@
-@page "/regimealimentars/create"
+﻿@page "/regimes/create"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (criar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IMensagensService Mensagens
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Novo regime alimentar</PageTitle>
 
-<h1>Create</h1>
+<h1>Criar registo</h1>
 
-<h2>RegimeAlimentar</h2>
+@* Erros desta página (por exemplo, nome repetido), a vermelho. *@
+<Aviso Erro="@erro" />
+
+<h4>Regime alimentar</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="RegimeAlimentar" OnValidSubmit="AddRegimeAlimentar" FormName="create" Enhance>
+            @* Aplica as anotações da classe RegimeAlimentar ([Required], [StringLength], ...) ao formulário. *@
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
+
             <div class="mb-3">
-                <label for="nome" class="form-label">Nome:</label> 
-                <InputText id="nome" @bind-Value="RegimeAlimentar.Nome" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => RegimeAlimentar.Nome" class="text-danger" /> 
-            </div>        
+                <label for="nome" class="form-label">Nome:</label>
+                <InputText id="nome" @bind-Value="RegimeAlimentar.Nome" class="form-control" />
+                <ValidationMessage For="() => RegimeAlimentar.Nome" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="descricao" class="form-label">Descricao:</label> 
-                <InputText id="descricao" @bind-Value="RegimeAlimentar.Descricao" class="form-control" /> 
-                <ValidationMessage For="() => RegimeAlimentar.Descricao" class="text-danger" /> 
-            </div>        
+                <label for="descricao" class="form-label">Descrição:</label>
+                <InputText id="descricao" @bind-Value="RegimeAlimentar.Descricao" class="form-control" />
+                <ValidationMessage For="() => RegimeAlimentar.Descricao" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="percentagem" class="form-label">Percentagem:</label> 
-                <InputNumber id="percentagem" @bind-Value="RegimeAlimentar.Percentagem" class="form-control" /> 
-                <ValidationMessage For="() => RegimeAlimentar.Percentagem" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="ativo" class="form-label">Ativo:</label> 
-                <InputCheckbox id="ativo" @bind-Value="RegimeAlimentar.Ativo" class="form-check-input" /> 
-                <ValidationMessage For="() => RegimeAlimentar.Ativo" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+                <label for="percentagem" class="form-label">Acréscimo sobre o preço por noite (%):</label>
+                <InputNumber id="percentagem" @bind-Value="RegimeAlimentar.Percentagem" class="form-control" />
+                <ValidationMessage For="() => RegimeAlimentar.Percentagem" class="text-danger" />
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox id="ativo" @bind-Value="RegimeAlimentar.Ativo" class="form-check-input" />
+                <label for="ativo" class="form-check-label">Ativo</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" title="Gravar">
+                <img src="/img/saveicon.png" style="height:30px" alt="Gravar" />
+            </button>
+            <a href="/regimes" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </EditForm>
     </div>
 </div>
 
-<div>
-    <a href="/regimealimentars">Back to List</a>
-</div>
-
 @code {
+    // Erro da última tentativa de gravar, mostrado no <Aviso> do topo.
+    private string? erro;
+
+    // O objeto que o formulário preenche. Começa vazio.
     [SupplyParameterFromForm]
     private RegimeAlimentar RegimeAlimentar { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    // Create: Add marca o objeto como novo; SaveChangesAsync faz o INSERT.
     private async Task AddRegimeAlimentar()
     {
+        erro = null;
         using var context = DbFactory.CreateDbContext();
+
+        // Nome repetido: avisa já, em vez de deixar a base de dados recusar (índice único).
+        if (await context.RegimesAlimentares.AnyAsync(x => x.Nome == RegimeAlimentar.Nome))
+        {
+            erro = $"Já existe um regime alimentar com o nome \"{RegimeAlimentar.Nome}\".";
+            return;
+        }
+
         context.RegimesAlimentares.Add(RegimeAlimentar);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/regimealimentars");
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // A base de dados recusou (índice único ou restrição CHECK).
+            erro = "Não foi possível gravar: a base de dados recusou os dados.";
+            return;
+        }
+
+        // Fica guardada no serviço IMensagensService; o <Aviso> da listagem mostra-a.
+        Mensagens.Sucesso("Regime alimentar criado.");
+        NavigationManager.NavigateTo("/regimes");
     }
 }

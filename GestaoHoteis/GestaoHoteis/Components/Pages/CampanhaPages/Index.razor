@@ -1,36 +1,57 @@
-@page "/campanhas"
+﻿@page "/campanhas"
+@* Do framework: o [Authorize], o EF Core (IDbContextFactory, ...) e a QuickGrid *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
+@* Nossos: as entidades e o contexto (já estão no _Imports.razor; o scaffolding repete-os) *@
 @using GestaoHoteis.Entities
 @using GestaoHoteis.Data
+@* Quem pode abrir: Administrador ou Funcionario (listar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* O Blazor chama o DisposeAsync quando se sai da página: liberta o contexto *@
 @implements IAsyncDisposable
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Campanhas</PageTitle>
 
-<h1>Index</h1>
+<h1>Listagem de Campanhas</h1>
+
+@* Mensagem da última operação (por exemplo, "Campanha criada."), verde ou vermelha. *@
+<Aviso />
 
 <p>
-    <a href="campanhas/create">Create New</a>
+    <a href="campanhas/create" title="Nova campanha">
+        <img src="/img/novo.png" style="height:50px" alt="Nova campanha" />
+    </a>
 </p>
 
-<QuickGrid Class="table" Items="context.Campanhas">
-    <PropertyColumn Property="campanha => campanha.Nome" />
-    <PropertyColumn Property="campanha => campanha.Descricao" />
-    <PropertyColumn Property="campanha => campanha.Percentagem" />
-    <PropertyColumn Property="campanha => campanha.DataInicio" />
-    <PropertyColumn Property="campanha => campanha.DataFim" />
-    <PropertyColumn Property="campanha => campanha.Ativo" />
-    <PropertyColumn Property="campanha => campanha.HotelId" />
+@* Include: junta a unidade de cada campanha (JOIN no SQL), para a coluna Unidade.
+   Por unidade e, dentro de cada uma, pela data de início. *@
+<QuickGrid Class="table" Items="context.Campanhas.Include(c => c.hotel).OrderBy(c => c.hotel.Nome).ThenBy(c => c.DataInicio)">
+    <PropertyColumn Property="campanha => campanha.Nome" Title="Nome" Sortable="true" />
+    <PropertyColumn Property="campanha => campanha.hotel.Nome" Title="Unidade" Sortable="true" />
+    @* Positiva aumenta o preço; negativa é um desconto. *@
+    <PropertyColumn Property="campanha => campanha.Percentagem" Title="Ajuste (%)" Format="N2" Sortable="true" />
+    <PropertyColumn Property="campanha => campanha.DataInicio" Title="Início" Format="dd/MM/yyyy" Sortable="true" />
+    <PropertyColumn Property="campanha => campanha.DataFim" Title="Fim" Format="dd/MM/yyyy" Sortable="true" />
+    <TemplateColumn Title="Ativa" Context="campanha">@(campanha.Ativo ? "Sim" : "Não")</TemplateColumn>
 
     <TemplateColumn Context="campanha">
-        <a href="@($"campanhas/edit?id={campanha.Id}")">Edit</a> |
-        <a href="@($"campanhas/details?id={campanha.Id}")">Details</a> |
-        <a href="@($"campanhas/delete?id={campanha.Id}")">Delete</a>
+        <a href="@($"campanhas/edit?id={campanha.Id}")" title="Editar">
+            <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+        </a> |
+        <a href="@($"campanhas/details?id={campanha.Id}")" title="Detalhes">
+            <img src="/img/detailsicon.png" style="height:30px" alt="Detalhes" />
+        </a>
+        | <a href="@($"campanhas/delete?id={campanha.Id}")" title="Apagar">
+            <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+        </a>
     </TemplateColumn>
 </QuickGrid>
 
 @code {
+    // Um contexto para toda a vida da página: a QuickGrid usa-o sempre que consulta.
     private ApplicationDbContext context = default!;
 
     protected override void OnInitialized()

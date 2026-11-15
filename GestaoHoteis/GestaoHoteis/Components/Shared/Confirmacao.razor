@@ -1,0 +1,34 @@
+﻿@* Janela de confirmação, feita só com Razor e Bootstrap (sem JavaScript).
+   Aparece por cima da página enquanto Visivel for true.
+   A página decide o título, o texto e o que acontece em cada botão. *@
+@if (Visivel)
+{
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@Titulo</h5>
+                </div>
+                <div class="modal-body">
+                    <p>@Texto</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="OnCancelar">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="OnConfirmar">@TextoConfirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visivel { get; set; }
+    [Parameter] public string Titulo { get; set; } = "Confirmar";
+    [Parameter] public string? Texto { get; set; }
+    [Parameter] public string TextoConfirmar { get; set; } = "Confirmar";
+
+    // EventCallback: o método da página que corre quando se carrega no botão.
+    [Parameter] public EventCallback OnConfirmar { get; set; }
+    [Parameter] public EventCallback OnCancelar { get; set; }
+}

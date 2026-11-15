@@ -1,63 +1,122 @@
-@page "/hotels/delete"
+﻿@page "/hoteis/delete"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (apagar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IImagensService Imagens
+@inject IMensagensService Mensagens
 
-<PageTitle>Delete</PageTitle>
+<PageTitle>Apagar</PageTitle>
 
-<h1>Delete</h1>
+<h1>Apagar registo</h1>
 
-<p>Are you sure you want to delete this?</p>
+@* Erros desta página (a base de dados recusou apagar), a vermelho. *@
+<Aviso Erro="@erro" />
+
 <div>
-    <h2>Hotel</h2>
+    <h4>Unidade hoteleira</h4>
     <hr />
     @if (hotel is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>A carregar...</em></p>
     }
-    else {
+    else
+    {
+        <img src="@Imagens.Src(hotel.Imagem, hotel.UrlImagem)" class="img-thumbnail mb-3"
+             style="width:200px" alt="@hotel.Nome" />
+
         <dl class="row">
             <dt class="col-sm-2">Nome</dt>
             <dd class="col-sm-10">@hotel.Nome</dd>
-        </dl>
-        <dl class="row">
             <dt class="col-sm-2">Tipo</dt>
             <dd class="col-sm-10">@hotel.Tipo</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Estrelas</dt>
-            <dd class="col-sm-10">@hotel.Estrelas</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Descricao</dt>
+            <dt class="col-sm-2">Classificação</dt>
+            <dd class="col-sm-10">@hotel.Estrelas estrela(s)</dd>
+            <dt class="col-sm-2">Descrição</dt>
             <dd class="col-sm-10">@hotel.Descricao</dd>
+            <dt class="col-sm-2">Morada</dt>
+            <dd class="col-sm-10">
+                @hotel.morada.Rua<br />
+                @hotel.morada.CodigoPostal @hotel.morada.Localidade<br />
+                @hotel.morada.Distrito, @hotel.morada.Pais
+            </dd>
+            <dt class="col-sm-2">Ativa</dt>
+            <dd class="col-sm-10">@(hotel.Ativo ? "Sim" : "Não")</dd>
         </dl>
-        <dl class="row">
-            <dt class="col-sm-2">UrlImagem</dt>
-            <dd class="col-sm-10">@hotel.UrlImagem</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Imagem</dt>
-            <dd class="col-sm-10">@hotel.Imagem</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Ativo</dt>
-            <dd class="col-sm-10">@hotel.Ativo</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">MoradaId</dt>
-            <dd class="col-sm-10">@hotel.MoradaId</dd>
-        </dl>
-        <EditForm method="post" Model="hotel" OnValidSubmit="DeleteHotel" FormName="delete" Enhance>
-            <button type="submit" class="btn btn-danger" disabled="@(hotel is null)">Delete</button> |
-            <a href="/hotels">Back to List</a>
-        </EditForm>
+
+        @* Uma unidade hoteleira só pode ser apagada se não existirem alojamentos nem reservas
+           associados; caso contrário, apenas pode ser desativada (RN05). *@
+        @if (EmUso)
+        {
+            <p class="text-danger">
+                Esta unidade hoteleira não pode ser apagada: tem @nAlojamentos alojamento(s) e @nReservas reserva(s).
+                Em alternativa, pode ser desativada na página de edição.
+            </p>
+            <div>
+                <a href="@($"/hoteis/edit?id={hotel.Id}")" title="Editar">
+                    <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+                </a> |
+                <a href="/hoteis" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
+            </div>
+        }
+        else
+        {
+            <h5>Tem a certeza de que quer apagar este registo?</h5>
+
+            @* A relação Hotel-Campanha tem cascata: apagar a unidade apaga as suas campanhas. Avisa-se antes. *@
+            @if (nCampanhas > 0)
+            {
+                <p class="text-danger">
+                    Atenção: esta unidade tem @nCampanhas campanha(s), que também vão ser apagadas.
+                </p>
+            }
+
+            @* Apagar pede primeiro confirmação, se a unidade tiver campanhas (ver PedeConfirmacao). *@
+            <EditForm method="post" Model="hotel" OnValidSubmit="PedeConfirmacao" FormName="delete" Enhance>
+                <button type="submit" class="btn btn-danger" title="Apagar">
+                    <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+                </button> |
+                <a href="/hoteis" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
+            </EditForm>
+
+            @* Janela de confirmação (Components/Shared/Confirmacao.razor). Só aparece quando confirmar é true. *@
+            <Confirmacao Visivel="confirmar"
+                         Titulo="Apagar também as campanhas?"
+                         Texto="@($"A unidade {hotel.Nome} tem {nCampanhas} campanha(s). Ao apagá-la, a base de dados apaga também essas campanhas. Quer continuar?")"
+                         TextoConfirmar="Apagar tudo"
+                         OnConfirmar="DeleteHotel"
+                         OnCancelar="() => confirmar = false" />
+        }
     }
 </div>
 
 @code {
+    // Erro da última tentativa de apagar, mostrado no <Aviso> do topo.
+    private string? erro;
+
     private Hotel? hotel;
+
+    // O que depende desta unidade.
+    private int nAlojamentos;
+    private int nReservas;
+    private int nCampanhas;
+
+    // Com alojamentos ou reservas, a página não mostra o botão de apagar.
+    private bool EmUso => nAlojamentos > 0 || nReservas > 0;
+
+    // A janela de confirmação está aberta?
+    private bool confirmar;
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -65,19 +124,60 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        hotel = await context.Hoteis.FirstOrDefaultAsync(m => m.Id == Id);
+        hotel = await context.Hoteis
+            .Include(h => h.morada)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (hotel is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        nAlojamentos = await context.Alojamentos.CountAsync(a => a.HotelId == Id);
+        nReservas = await context.Reservas.CountAsync(r => r.HotelId == Id);
+        nCampanhas = await context.Campanhas.CountAsync(c => c.HotelId == Id);
     }
 
+    // Carregar em Apagar: com campanhas, abre a janela de confirmação; sem campanhas, apaga já.
+    private async Task PedeConfirmacao()
+    {
+        if (nCampanhas > 0)
+        {
+            confirmar = true;
+            return;
+        }
+
+        await DeleteHotel();
+    }
+
+    // Delete: Remove marca os objetos para apagar; SaveChangesAsync faz os DELETE.
     private async Task DeleteHotel()
     {
+        erro = null;
+        confirmar = false;
         using var context = DbFactory.CreateDbContext();
+
+        // A unidade e a sua morada: a morada só servia esta unidade (relação 1-1) e não é
+        // apagada pela base de dados (a chave estrangeira está na unidade). Apagam-se as duas;
+        // o EF Core apaga primeiro a unidade, que é quem aponta para a morada.
+        // As campanhas são apagadas pela própria base de dados (ON DELETE CASCADE).
         context.Hoteis.Remove(hotel!);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/hotels");
+        context.Moradas.Remove(hotel!.morada);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Entretanto alguém criou um alojamento ou uma reserva: a base de dados recusou (Restrict).
+            erro = "Não foi possível apagar: há registos que dependem desta unidade hoteleira.";
+            return;
+        }
+
+        Mensagens.Sucesso(nCampanhas > 0
+            ? $"Unidade hoteleira apagada, com as suas {nCampanhas} campanha(s)."
+            : "Unidade hoteleira apagada.");
+        NavigationManager.NavigateTo("/hoteis");
     }
 }

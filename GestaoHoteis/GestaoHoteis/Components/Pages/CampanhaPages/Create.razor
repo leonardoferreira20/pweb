@@ -1,74 +1,160 @@
-@page "/campanhas/create"
+﻿@page "/campanhas/create"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (criar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IMensagensService Mensagens
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Nova campanha</PageTitle>
 
-<h1>Create</h1>
+<h1>Criar registo</h1>
 
-<h2>Campanha</h2>
+@* Erros desta página (por exemplo, períodos sobrepostos), a vermelho. *@
+<Aviso Erro="@erro" />
+
+<h4>Campanha</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="Campanha" OnValidSubmit="AddCampanha" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
+
             <div class="mb-3">
-                <label for="nome" class="form-label">Nome:</label> 
-                <InputText id="nome" @bind-Value="Campanha.Nome" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Campanha.Nome" class="text-danger" /> 
-            </div>        
+                <label for="nome" class="form-label">Nome:</label>
+                <InputText id="nome" @bind-Value="Campanha.Nome" class="form-control" />
+                <ValidationMessage For="() => Campanha.Nome" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="descricao" class="form-label">Descricao:</label> 
-                <InputText id="descricao" @bind-Value="Campanha.Descricao" class="form-control" /> 
-                <ValidationMessage For="() => Campanha.Descricao" class="text-danger" /> 
-            </div>        
+                <label for="descricao" class="form-label">Descrição:</label>
+                <InputText id="descricao" @bind-Value="Campanha.Descricao" class="form-control" />
+                <ValidationMessage For="() => Campanha.Descricao" class="text-danger" />
+            </div>
+
+            @* Chave estrangeira: escolhe-se a unidade pelo nome (o scaffolder gerou InputNumber). *@
             <div class="mb-3">
-                <label for="percentagem" class="form-label">Percentagem:</label> 
-                <InputNumber id="percentagem" @bind-Value="Campanha.Percentagem" class="form-control" /> 
-                <ValidationMessage For="() => Campanha.Percentagem" class="text-danger" /> 
-            </div>        
+                <label for="hotel" class="form-label">Unidade hoteleira:</label>
+                <InputSelect id="hotel" @bind-Value="Campanha.HotelId" class="form-select">
+                    <option value="0">-- escolha a unidade --</option>
+                    @foreach (var h in hoteis)
+                    {
+                        <option value="@h.Id">@h.Nome</option>
+                    }
+                </InputSelect>
+                <div class="text-danger">@erroHotel</div>
+            </div>
+
             <div class="mb-3">
-                <label for="datainicio" class="form-label">DataInicio:</label> 
-                <InputDate id="datainicio" @bind-Value="Campanha.DataInicio" class="form-control" /> 
-                <ValidationMessage For="() => Campanha.DataInicio" class="text-danger" /> 
-            </div>        
+                <label for="percentagem" class="form-label">Ajuste do preço (%; negativo é desconto):</label>
+                <InputNumber id="percentagem" @bind-Value="Campanha.Percentagem" class="form-control" />
+                @* Mostra o erro do [Range] e o do método Validate da classe Campanha (percentagem zero). *@
+                <ValidationMessage For="() => Campanha.Percentagem" class="text-danger" />
+            </div>
+            @* InputDate: a caixa de datas do browser, ligada a um DateTime. *@
             <div class="mb-3">
-                <label for="datafim" class="form-label">DataFim:</label> 
-                <InputDate id="datafim" @bind-Value="Campanha.DataFim" class="form-control" /> 
-                <ValidationMessage For="() => Campanha.DataFim" class="text-danger" /> 
-            </div>        
+                <label for="datainicio" class="form-label">Primeiro dia:</label>
+                <InputDate id="datainicio" @bind-Value="Campanha.DataInicio" class="form-control" />
+            </div>
             <div class="mb-3">
-                <label for="ativo" class="form-label">Ativo:</label> 
-                <InputCheckbox id="ativo" @bind-Value="Campanha.Ativo" class="form-check-input" /> 
-                <ValidationMessage For="() => Campanha.Ativo" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="hotelid" class="form-label">HotelId:</label> 
-                <InputNumber id="hotelid" @bind-Value="Campanha.HotelId" class="form-control" /> 
-                <ValidationMessage For="() => Campanha.HotelId" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+                <label for="datafim" class="form-label">Último dia:</label>
+                <InputDate id="datafim" @bind-Value="Campanha.DataFim" class="form-control" />
+                @* O erro do método Validate da classe Campanha (fim antes do início). *@
+                <ValidationMessage For="() => Campanha.DataFim" class="text-danger" />
+            </div>
+
+            <div class="mb-3 form-check">
+                <InputCheckbox id="ativo" @bind-Value="Campanha.Ativo" class="form-check-input" />
+                <label for="ativo" class="form-check-label">Ativa (uma campanha inativa não é aplicada)</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" title="Gravar">
+                <img src="/img/saveicon.png" style="height:30px" alt="Gravar" />
+            </button>
+            <a href="/campanhas" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </EditForm>
     </div>
 </div>
 
-<div>
-    <a href="/campanhas">Back to List</a>
-</div>
-
 @code {
+    // Erro da última tentativa de gravar, mostrado no <Aviso> do topo.
+    private string? erro;
+
+    // O objeto que o formulário preenche. As datas começam no dia de hoje (ver a classe Campanha).
     [SupplyParameterFromForm]
     private Campanha Campanha { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task AddCampanha()
+    // A lista da caixa de escolha.
+    private List<Hotel> hoteis = [];
+
+    private string? erroHotel;
+
+    protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
+        hoteis = await context.Hoteis.OrderBy(h => h.Nome).ToListAsync();
+    }
+
+    // As regras que precisam da base de dados. Devolve a mensagem de erro, ou null se estiver tudo bem.
+    private async Task<string?> VerificaRegras(GestaoHoteis.Data.ApplicationDbContext context)
+    {
+        var c = Campanha;
+
+        // Uma unidade pode ter várias campanhas, desde que os períodos não se sobreponham (RN51).
+        // Dois períodos sobrepõem-se quando cada um começa antes de o outro acabar.
+        // c.Id != x.Id: ao editar, a campanha não se compara com ela própria.
+        var sobreposta = await context.Campanhas.FirstOrDefaultAsync(x =>
+            x.HotelId == c.HotelId && x.Id != c.Id
+            && x.DataInicio <= c.DataFim && x.DataFim >= c.DataInicio);
+
+        return sobreposta is null
+            ? null
+            : $"O período sobrepõe-se ao da campanha \"{sobreposta.Nome}\" "
+              + $"({sobreposta.DataInicio:dd/MM/yyyy} a {sobreposta.DataFim:dd/MM/yyyy}) da mesma unidade.";
+    }
+
+    // Create: Add marca o objeto como novo; SaveChangesAsync faz o INSERT.
+    private async Task AddCampanha()
+    {
+        erro = null;
+
+        // HotelId é obrigatório e 0 não é o Id de nenhuma unidade.
+        erroHotel = Campanha.HotelId == 0 ? "Escolha a unidade hoteleira da campanha." : null;
+        if (erroHotel is not null)
+        {
+            return;
+        }
+
+        using var context = DbFactory.CreateDbContext();
+
+        erro = await VerificaRegras(context);
+        if (erro is not null)
+        {
+            return;
+        }
+
         context.Campanhas.Add(Campanha);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // A base de dados recusou (restrição CHECK).
+            erro = "Não foi possível gravar: a base de dados recusou os dados.";
+            return;
+        }
+
+        // Fica guardada no serviço IMensagensService; o <Aviso> da listagem mostra-a.
+        Mensagens.Sucesso("Campanha criada.");
         NavigationManager.NavigateTo("/campanhas");
     }
 }

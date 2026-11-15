@@ -1,49 +1,88 @@
-@page "/caracteristicas/create"
+﻿@page "/caracteristicas/create"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (criar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IMensagensService Mensagens
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Nova característica</PageTitle>
 
-<h1>Create</h1>
+<h1>Criar registo</h1>
 
-<h2>Caracteristica</h2>
+@* Erros desta página (por exemplo, nome repetido), a vermelho. *@
+<Aviso Erro="@erro" />
+
+<h4>Característica</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="Caracteristica" OnValidSubmit="AddCaracteristica" FormName="create" Enhance>
+            @* Aplica as anotações da classe Caracteristica ([Required], [StringLength], ...) ao formulário. *@
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
+
             <div class="mb-3">
-                <label for="nome" class="form-label">Nome:</label> 
-                <InputText id="nome" @bind-Value="Caracteristica.Nome" class="form-control" aria-required="true"/> 
-                <ValidationMessage For="() => Caracteristica.Nome" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="ativo" class="form-label">Ativo:</label> 
-                <InputCheckbox id="ativo" @bind-Value="Caracteristica.Ativo" class="form-check-input" /> 
-                <ValidationMessage For="() => Caracteristica.Ativo" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+                <label for="nome" class="form-label">Nome:</label>
+                <InputText id="nome" @bind-Value="Caracteristica.Nome" class="form-control" />
+                <ValidationMessage For="() => Caracteristica.Nome" class="text-danger" />
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox id="ativo" @bind-Value="Caracteristica.Ativo" class="form-check-input" />
+                <label for="ativo" class="form-check-label">Ativa</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" title="Gravar">
+                <img src="/img/saveicon.png" style="height:30px" alt="Gravar" />
+            </button>
+            <a href="/caracteristicas" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </EditForm>
     </div>
 </div>
 
-<div>
-    <a href="/caracteristicas">Back to List</a>
-</div>
-
 @code {
+    // Erro da última tentativa de gravar, mostrado no <Aviso> do topo.
+    private string? erro;
+
+    // O objeto que o formulário preenche. Começa vazio.
     [SupplyParameterFromForm]
     private Caracteristica Caracteristica { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    // Create: Add marca o objeto como novo; SaveChangesAsync faz o INSERT.
     private async Task AddCaracteristica()
     {
+        erro = null;
         using var context = DbFactory.CreateDbContext();
+
+        // Nome repetido: avisa já, em vez de deixar a base de dados recusar (índice único).
+        if (await context.Caracteristicas.AnyAsync(x => x.Nome == Caracteristica.Nome))
+        {
+            erro = $"Já existe uma característica com o nome \"{Caracteristica.Nome}\".";
+            return;
+        }
+
         context.Caracteristicas.Add(Caracteristica);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // A base de dados recusou (índice único ou restrição CHECK).
+            erro = "Não foi possível gravar: a base de dados recusou os dados.";
+            return;
+        }
+
+        // Fica guardada no serviço IMensagensService; o <Aviso> da listagem mostra-a.
+        Mensagens.Sucesso("Característica criada.");
         NavigationManager.NavigateTo("/caracteristicas");
     }
 }

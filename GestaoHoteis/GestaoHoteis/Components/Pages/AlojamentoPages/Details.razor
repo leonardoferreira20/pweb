@@ -1,48 +1,73 @@
-@page "/alojamentos/details"
+﻿@page "/alojamentos/details"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (ver o detalhe; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IImagensService Imagens
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Detalhes</PageTitle>
 
-<h1>Details</h1>
+<h1>Detalhes do registo</h1>
 
 <div>
-    <h2>Alojamento</h2>
+    <h4>Alojamento</h4>
     <hr />
     @if (alojamento is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>A carregar...</em></p>
     }
-    else {
+    else
+    {
+        <img src="@Imagens.Src(alojamento.Imagem, alojamento.UrlImagem)" class="img-thumbnail mb-3"
+             style="width:200px" alt="@alojamento.Nome" />
+
         <dl class="row">
             <dt class="col-sm-2">Nome</dt>
             <dd class="col-sm-10">@alojamento.Nome</dd>
-            <dt class="col-sm-2">Descricao</dt>
+            <dt class="col-sm-2">Descrição</dt>
             <dd class="col-sm-10">@alojamento.Descricao</dd>
+            <dt class="col-sm-2">Unidade</dt>
+            <dd class="col-sm-10">@alojamento.hotel.Nome</dd>
+            <dt class="col-sm-2">Categoria</dt>
+            <dd class="col-sm-10">@alojamento.categoria.Nome</dd>
+            <dt class="col-sm-2">Modo</dt>
+            <dd class="col-sm-10">@alojamento.modoDisponibilizacao.Nome</dd>
             <dt class="col-sm-2">Capacidade</dt>
-            <dd class="col-sm-10">@alojamento.Capacidade</dd>
-            <dt class="col-sm-2">NumUnidades</dt>
+            <dd class="col-sm-10">@alojamento.Capacidade pessoa(s)</dd>
+            <dt class="col-sm-2">Unidades</dt>
             <dd class="col-sm-10">@alojamento.NumUnidades</dd>
-            <dt class="col-sm-2">PrecoNoite</dt>
-            <dd class="col-sm-10">@alojamento.PrecoNoite</dd>
-            <dt class="col-sm-2">UrlImagem</dt>
-            <dd class="col-sm-10">@alojamento.UrlImagem</dd>
-            <dt class="col-sm-2">Imagem</dt>
-            <dd class="col-sm-10">@alojamento.Imagem</dd>
+            <dt class="col-sm-2">Preço por noite</dt>
+            <dd class="col-sm-10">@alojamento.PrecoNoite.ToString("N2") €</dd>
+            @* Relação N-M: a coleção regimes, preenchida pelo Include. O preço com regime é o
+               preço por noite mais a percentagem do regime (RN45). *@
+            <dt class="col-sm-2">Regimes</dt>
+            <dd class="col-sm-10">
+                @foreach (var r in alojamento.regimes.OrderBy(r => r.Percentagem))
+                {
+                    <div>@r.Nome: @((alojamento.PrecoNoite * (1 + r.Percentagem / 100)).ToString("N2")) € por noite</div>
+                }
+            </dd>
+            <dt class="col-sm-2">Características</dt>
+            <dd class="col-sm-10">@string.Join(", ", alojamento.caracteristicas.Select(c => c.Nome).Order())</dd>
             <dt class="col-sm-2">Ativo</dt>
-            <dd class="col-sm-10">@alojamento.Ativo</dd>
-            <dt class="col-sm-2">HotelId</dt>
-            <dd class="col-sm-10">@alojamento.HotelId</dd>
-            <dt class="col-sm-2">CategoriaId</dt>
-            <dd class="col-sm-10">@alojamento.CategoriaId</dd>
-            <dt class="col-sm-2">ModoDisponibilizacaoId</dt>
-            <dd class="col-sm-10">@alojamento.ModoDisponibilizacaoId</dd>
+            <dd class="col-sm-10">@(alojamento.Ativo ? "Sim" : "Não")</dd>
+            <dt class="col-sm-2">Ficheiro</dt>
+            <dd class="col-sm-10">@alojamento.UrlImagem</dd>
         </dl>
         <div>
-            <a href="@($"/alojamentos/edit?id={alojamento.Id}")">Edit</a> |
-            <a href="@($"/alojamentos")">Back to List</a>
+            <a href="@($"/alojamentos/edit?id={alojamento.Id}")" title="Editar">
+                <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+            </a> |
+            <a href="/alojamentos" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </div>
     }
 </div>
@@ -56,7 +81,14 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        alojamento = await context.Alojamentos.FirstOrDefaultAsync(m => m.Id == Id);
+        // Um Include por navegação: três relações N-1 e as duas coleções N-M.
+        alojamento = await context.Alojamentos
+            .Include(a => a.hotel)
+            .Include(a => a.categoria)
+            .Include(a => a.modoDisponibilizacao)
+            .Include(a => a.regimes)
+            .Include(a => a.caracteristicas)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (alojamento is null)
         {

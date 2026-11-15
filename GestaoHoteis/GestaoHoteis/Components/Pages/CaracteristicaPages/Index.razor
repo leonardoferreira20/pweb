@@ -1,31 +1,51 @@
-@page "/caracteristicas"
+﻿@page "/caracteristicas"
+@* Do framework: o [Authorize], o EF Core (IDbContextFactory, ...) e a QuickGrid *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
+@* Nossos: as entidades e o contexto (já estão no _Imports.razor; o scaffolding repete-os) *@
 @using GestaoHoteis.Entities
 @using GestaoHoteis.Data
+@* Quem pode abrir: Administrador ou Funcionario (listar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* O Blazor chama o DisposeAsync quando se sai da página: liberta o contexto *@
 @implements IAsyncDisposable
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Características</PageTitle>
 
-<h1>Index</h1>
+<h1>Listagem de Características</h1>
+
+@* Mensagem da última operação (por exemplo, "Característica criada."), verde ou vermelha. *@
+<Aviso />
 
 <p>
-    <a href="caracteristicas/create">Create New</a>
+    <a href="caracteristicas/create" title="Nova característica">
+        <img src="/img/novo.png" style="height:50px" alt="Nova característica" />
+    </a>
 </p>
 
-<QuickGrid Class="table" Items="context.Caracteristicas">
-    <PropertyColumn Property="caracteristica => caracteristica.Nome" />
-    <PropertyColumn Property="caracteristica => caracteristica.Ativo" />
+@* Items: a consulta que a QuickGrid executa. Por ordem alfabética do nome. *@
+<QuickGrid Class="table" Items="context.Caracteristicas.OrderBy(caracteristica => caracteristica.Nome)">
+    <PropertyColumn Property="caracteristica => caracteristica.Nome" Title="Nome" />
+    <TemplateColumn Title="Ativa" Context="caracteristica">@(caracteristica.Ativo ? "Sim" : "Não")</TemplateColumn>
 
     <TemplateColumn Context="caracteristica">
-        <a href="@($"caracteristicas/edit?id={caracteristica.Id}")">Edit</a> |
-        <a href="@($"caracteristicas/details?id={caracteristica.Id}")">Details</a> |
-        <a href="@($"caracteristicas/delete?id={caracteristica.Id}")">Delete</a>
+        <a href="@($"caracteristicas/edit?id={caracteristica.Id}")" title="Editar">
+            <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+        </a> |
+        <a href="@($"caracteristicas/details?id={caracteristica.Id}")" title="Detalhes">
+            <img src="/img/detailsicon.png" style="height:30px" alt="Detalhes" />
+        </a>
+        | <a href="@($"caracteristicas/delete?id={caracteristica.Id}")" title="Apagar">
+            <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+        </a>
     </TemplateColumn>
 </QuickGrid>
 
 @code {
+    // Um contexto para toda a vida da página: a QuickGrid usa-o sempre que consulta.
     private ApplicationDbContext context = default!;
 
     protected override void OnInitialized()

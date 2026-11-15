@@ -12,3 +12,8 @@
 @* As nossas classes: o contexto e o utilizador (Data) e as entidades (Entities). *@
 @using GestaoHoteis.Data
 @using GestaoHoteis.Entities
+@* Os contratos dos nossos serviços (IImagensService, IMensagensService), que as páginas pedem com @inject.
+   O namespace das classes (GestaoHoteis.Services) fica de fora de propósito: só o Program.cs as conhece. *@
+@using GestaoHoteis.Interfaces
+@* Os nossos componentes partilhados (Aviso, Confirmacao, MoradaCampos). *@
+@using GestaoHoteis.Components.Shared

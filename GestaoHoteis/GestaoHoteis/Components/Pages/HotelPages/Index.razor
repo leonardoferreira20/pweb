@@ -1,43 +1,119 @@
-@page "/hotels"
+﻿@page "/hoteis"
+@* Do framework: o [Authorize], o EF Core (IDbContextFactory, ...) e a QuickGrid *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
+@* Nossos: as entidades e o contexto (já estão no _Imports.razor; o scaffolding repete-os) *@
 @using GestaoHoteis.Entities
 @using GestaoHoteis.Data
+@* Quem pode abrir: Administrador ou Funcionario (listar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* O Blazor chama o DisposeAsync quando se sai da página: liberta o contexto *@
 @implements IAsyncDisposable
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IImagensService Imagens
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Unidades hoteleiras</PageTitle>
 
-<h1>Index</h1>
+<h1>Listagem de Unidades Hoteleiras</h1>
+
+@* Mensagem da última operação (por exemplo, "Unidade hoteleira criada."), verde ou vermelha. *@
+<Aviso />
 
 <p>
-    <a href="hotels/create">Create New</a>
+    <a href="hoteis/create" title="Nova unidade hoteleira">
+        <img src="/img/novo.png" style="height:50px" alt="Nova unidade hoteleira" />
+    </a>
 </p>
 
-<QuickGrid Class="table" Items="context.Hoteis">
-    <PropertyColumn Property="hotel => hotel.Nome" />
-    <PropertyColumn Property="hotel => hotel.Tipo" />
-    <PropertyColumn Property="hotel => hotel.Estrelas" />
-    <PropertyColumn Property="hotel => hotel.Descricao" />
-    <PropertyColumn Property="hotel => hotel.UrlImagem" />
-    <PropertyColumn Property="hotel => hotel.Imagem" />
-    <PropertyColumn Property="hotel => hotel.Ativo" />
-    <PropertyColumn Property="hotel => hotel.MoradaId" />
+@* Pesquisa pelo nome ou pela localidade: escreve-se e carrega-se em Enter (ou sai-se da caixa). *@
+<div class="mb-2" style="max-width:320px">
+    <input type="search" class="form-control" placeholder="Pesquisar pelo nome ou localidade..."
+           @bind="pesquisa" @bind:after="AplicaPesquisa" />
+</div>
+
+@* Items: a consulta. Pagination: a QuickGrid só pede à base de dados a página que mostra. *@
+<QuickGrid Class="table" Items="hoteis" Pagination="paginacao">
+    @* Coluna da imagem: os bytes da base de dados, mostrados num <img>. *@
+    <TemplateColumn Context="hotel">
+        <img src="@Imagens.Src(hotel.Imagem, hotel.UrlImagem)" class="img-thumbnail"
+             style="width:100px" alt="@hotel.Nome" />
+    </TemplateColumn>
+    <PropertyColumn Property="hotel => hotel.Nome" Title="Nome" Sortable="true" />
+    <PropertyColumn Property="hotel => hotel.Tipo" Title="Tipo" Sortable="true" />
+    <PropertyColumn Property="hotel => hotel.Estrelas" Title="Estrelas" Sortable="true" />
+    @* hotel.morada é a navegação: só vem preenchida por causa do Include (ver @code). *@
+    <PropertyColumn Property="hotel => hotel.morada.Localidade" Title="Localidade" Sortable="true" />
+    <TemplateColumn Title="Ativa" Context="hotel">@(hotel.Ativo ? "Sim" : "Não")</TemplateColumn>
 
     <TemplateColumn Context="hotel">
-        <a href="@($"hotels/edit?id={hotel.Id}")">Edit</a> |
-        <a href="@($"hotels/details?id={hotel.Id}")">Details</a> |
-        <a href="@($"hotels/delete?id={hotel.Id}")">Delete</a>
+        <a href="@($"hoteis/edit?id={hotel.Id}")" title="Editar">
+            <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+        </a>
+        <a href="@($"hoteis/details?id={hotel.Id}")" title="Detalhes">
+            <img src="/img/detailsicon.png" style="height:30px" alt="Detalhes" />
+        </a>
+        <a href="@($"hoteis/delete?id={hotel.Id}")" title="Apagar">
+            <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+        </a>
     </TemplateColumn>
 </QuickGrid>
 
+<div class="d-flex align-items-center gap-2 mb-2">
+    Unidades por página:
+    <select @bind="paginacao.ItemsPerPage" @bind:after="VoltaAoInicio">
+        <option>5</option>
+        <option>10</option>
+        <option>15</option>
+    </select>
+</div>
+<Paginator State="paginacao" />
+
 @code {
+    // Um contexto para toda a vida da página: a QuickGrid usa-o sempre que consulta.
     private ApplicationDbContext context = default!;
+
+    // A consulta que a QuickGrid executa. Muda quando se pesquisa.
+    private IQueryable<Hotel> hoteis = default!;
+
+    // O texto da caixa de pesquisa.
+    private string pesquisa = "";
+
+    // O estado da paginação: quantos por página e em que página estamos.
+    private PaginationState paginacao = new() { ItemsPerPage = 5 };
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+        MontaConsulta();
     }
+
+    // Monta a consulta. Ainda não vai à base de dados: quem a executa é a QuickGrid.
+    private void MontaConsulta()
+    {
+        // Include: junta a morada de cada unidade (JOIN no SQL), para a coluna Localidade.
+        IQueryable<Hotel> consulta = context.Hoteis.Include(h => h.morada);
+
+        if (!string.IsNullOrWhiteSpace(pesquisa))
+        {
+            // Contains passa a LIKE '%texto%' no SQL.
+            consulta = consulta.Where(h => h.Nome!.Contains(pesquisa)
+                                        || h.morada.Localidade!.Contains(pesquisa));
+        }
+
+        hoteis = consulta.OrderBy(h => h.Nome);
+    }
+
+    private async Task AplicaPesquisa()
+    {
+        MontaConsulta();
+        await VoltaAoInicio();
+    }
+
+    // Volta à primeira página (a página atual pode deixar de existir).
+    private Task VoltaAoInicio() => paginacao.SetCurrentPageIndexAsync(0);
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }

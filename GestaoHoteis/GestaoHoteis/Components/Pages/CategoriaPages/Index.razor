@@ -1,32 +1,52 @@
-@page "/categoria"
+﻿@page "/categorias"
+@* Do framework: o [Authorize], o EF Core (IDbContextFactory, ...) e a QuickGrid *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
+@* Nossos: as entidades e o contexto (já estão no _Imports.razor; o scaffolding repete-os) *@
 @using GestaoHoteis.Entities
 @using GestaoHoteis.Data
+@* Quem pode abrir: Administrador ou Funcionario (listar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* O Blazor chama o DisposeAsync quando se sai da página: liberta o contexto *@
 @implements IAsyncDisposable
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Categorias</PageTitle>
 
-<h1>Index</h1>
+<h1>Listagem de Categorias de Alojamentos</h1>
+
+@* Mensagem da última operação (por exemplo, "Categoria criada."), verde ou vermelha. *@
+<Aviso />
 
 <p>
-    <a href="categoria/create">Create New</a>
+    <a href="categorias/create" title="Nova categoria">
+        <img src="/img/novo.png" style="height:50px" alt="Nova categoria" />
+    </a>
 </p>
 
-<QuickGrid Class="table" Items="context.Categorias">
-    <PropertyColumn Property="categoria => categoria.Nome" />
-    <PropertyColumn Property="categoria => categoria.Descricao" />
-    <PropertyColumn Property="categoria => categoria.Ativo" />
+@* Items: a consulta que a QuickGrid executa. Por ordem alfabética do nome. *@
+<QuickGrid Class="table" Items="context.Categorias.OrderBy(categoria => categoria.Nome)">
+    <PropertyColumn Property="categoria => categoria.Nome" Title="Nome" />
+    <PropertyColumn Property="categoria => categoria.Descricao" Title="Descrição" />
+    <TemplateColumn Title="Ativa" Context="categoria">@(categoria.Ativo ? "Sim" : "Não")</TemplateColumn>
 
     <TemplateColumn Context="categoria">
-        <a href="@($"categoria/edit?id={categoria.Id}")">Edit</a> |
-        <a href="@($"categoria/details?id={categoria.Id}")">Details</a> |
-        <a href="@($"categoria/delete?id={categoria.Id}")">Delete</a>
+        <a href="@($"categorias/edit?id={categoria.Id}")" title="Editar">
+            <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+        </a> |
+        <a href="@($"categorias/details?id={categoria.Id}")" title="Detalhes">
+            <img src="/img/detailsicon.png" style="height:30px" alt="Detalhes" />
+        </a>
+        | <a href="@($"categorias/delete?id={categoria.Id}")" title="Apagar">
+            <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+        </a>
     </TemplateColumn>
 </QuickGrid>
 
 @code {
+    // Um contexto para toda a vida da página: a QuickGrid usa-o sempre que consulta.
     private ApplicationDbContext context = default!;
 
     protected override void OnInitialized()

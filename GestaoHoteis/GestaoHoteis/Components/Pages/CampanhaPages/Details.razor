@@ -1,40 +1,49 @@
-@page "/campanhas/details"
+﻿@page "/campanhas/details"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (ver o detalhe; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Detalhes</PageTitle>
 
-<h1>Details</h1>
+<h1>Detalhes do registo</h1>
 
 <div>
-    <h2>Campanha</h2>
+    <h4>Campanha</h4>
     <hr />
     @if (campanha is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>A carregar...</em></p>
     }
-    else {
+    else
+    {
         <dl class="row">
             <dt class="col-sm-2">Nome</dt>
             <dd class="col-sm-10">@campanha.Nome</dd>
-            <dt class="col-sm-2">Descricao</dt>
+            <dt class="col-sm-2">Descrição</dt>
             <dd class="col-sm-10">@campanha.Descricao</dd>
-            <dt class="col-sm-2">Percentagem</dt>
-            <dd class="col-sm-10">@campanha.Percentagem</dd>
-            <dt class="col-sm-2">DataInicio</dt>
-            <dd class="col-sm-10">@campanha.DataInicio</dd>
-            <dt class="col-sm-2">DataFim</dt>
-            <dd class="col-sm-10">@campanha.DataFim</dd>
-            <dt class="col-sm-2">Ativo</dt>
-            <dd class="col-sm-10">@campanha.Ativo</dd>
-            <dt class="col-sm-2">HotelId</dt>
-            <dd class="col-sm-10">@campanha.HotelId</dd>
+            <dt class="col-sm-2">Unidade</dt>
+            <dd class="col-sm-10">@campanha.hotel.Nome</dd>
+            <dt class="col-sm-2">Ajuste do preço</dt>
+            <dd class="col-sm-10">@campanha.Percentagem.ToString("+0.00;-0.00") % (@(campanha.Percentagem > 0 ? "aumento" : "desconto"))</dd>
+            <dt class="col-sm-2">Período</dt>
+            <dd class="col-sm-10">@campanha.DataInicio.ToString("dd/MM/yyyy") a @campanha.DataFim.ToString("dd/MM/yyyy")</dd>
+            <dt class="col-sm-2">Ativa</dt>
+            <dd class="col-sm-10">@(campanha.Ativo ? "Sim" : "Não")</dd>
         </dl>
         <div>
-            <a href="@($"/campanhas/edit?id={campanha.Id}")">Edit</a> |
-            <a href="@($"/campanhas")">Back to List</a>
+            <a href="@($"/campanhas/edit?id={campanha.Id}")" title="Editar">
+                <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+            </a> |
+            <a href="/campanhas" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </div>
     }
 </div>
@@ -48,7 +57,10 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        campanha = await context.Campanhas.FirstOrDefaultAsync(m => m.Id == Id);
+        // Include: sem ele, campanha.hotel vinha a null.
+        campanha = await context.Campanhas
+            .Include(c => c.hotel)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (campanha is null)
         {

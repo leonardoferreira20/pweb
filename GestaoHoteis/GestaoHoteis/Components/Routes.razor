@@ -1,9 +1,20 @@
 ﻿@using GestaoHoteis.Components.Account.Shared
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
+        @* AuthorizeRouteView: antes de mostrar a página, verifica o [Authorize] que ela tiver. *@
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized>
-                <RedirectToLogin />
+                @if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    @* Há sessão iniciada, mas falta o role que a página pede (autorização). *@
+                    <h1 class="text-danger">Acesso negado</h1>
+                    <p>A sua conta não tem permissão para abrir esta página.</p>
+                }
+                else
+                {
+                    @* Ninguém fez login (autenticação): vai para a página de login. *@
+                    <RedirectToLogin />
+                }
             </NotAuthorized>
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />

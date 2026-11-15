@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using GestaoHoteis.Components;
 using GestaoHoteis.Components.Account;
 using GestaoHoteis.Data;
+// Os nossos serviços (Etapa 3): as interfaces e as classes que as cumprem.
+using GestaoHoteis.Interfaces;
+using GestaoHoteis.Services;
 
 // =====================================================================
 // 1.ª PARTE: REGISTAR SERVIÇOS
@@ -43,6 +46,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 // Acrescentado pelo scaffolder (Etapa 3): deixa a QuickGrid consultar
 // o EF Core de forma assíncrona (contar, paginar e ordenar na base de dados).
 builder.Services.AddQuickGridEntityFrameworkAdapter();
+
 // Em desenvolvimento, mostra uma página de ajuda quando há erros de base de dados.
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -65,6 +69,13 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 // Dá acesso ao pedido HTTP em curso, e ao utilizador que o fez,
 // a partir de qualquer classe (acrescentado na alínea 3.i).
 builder.Services.AddHttpContextAccessor();
+
+// Os nossos serviços (Etapa 3). Cada linha diz ao contentor: "quando uma página pedir
+// a interface (à esquerda, pasta Interfaces), entrega um objeto da classe (à direita, pasta Services)".
+// Singleton: um só objeto para toda a aplicação (não guarda dados de ninguém).
+builder.Services.AddSingleton<IImagensService, ImagensService>();
+// Scoped: um objeto por âmbito; nas páginas interativas, um por separador do browser.
+builder.Services.AddScoped<IMensagensService, MensagensService>();
 
 // =====================================================================
 // 2.ª PARTE: CONSTRUIR A APLICAÇÃO
@@ -131,6 +142,8 @@ else
     // que obriga o browser a usar HTTPS.
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
+    // Acrescentado pelo scaffolder (Etapa 3). Nas aulas corremos sempre em
+    // desenvolvimento, por isso esta linha nunca corre; pode ficar ou ser apagada.
     app.UseMigrationsEndPoint();
 }
 

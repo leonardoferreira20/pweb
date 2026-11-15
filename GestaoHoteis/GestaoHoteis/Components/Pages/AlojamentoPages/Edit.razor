@@ -1,134 +1,327 @@
-@page "/alojamentos/edit"
+﻿@page "/alojamentos/edit"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (editar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IImagensService Imagens
+@inject IMensagensService Mensagens
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Editar alojamento</PageTitle>
 
-<h1>Edit</h1>
+<h1>Editar registo</h1>
 
-<h2>Alojamento</h2>
+@* Erros desta página (por exemplo, nome repetido), a vermelho. *@
+<Aviso Erro="@erro" />
+
+<h4>Alojamento</h4>
 <hr />
 @if (Alojamento is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>A carregar...</em></p>
 }
 else
 {
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-5">
             <EditForm method="post" Model="Alojamento" OnValidSubmit="UpdateAlojamento" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary class="text-danger" role="alert" />
                 <input type="hidden" name="Alojamento.Id" value="@Alojamento.Id" />
+
+                @* A imagem atual, que veio da base de dados; muda logo que se escolhe outra. *@
+                <div class="mb-3">
+                    <img src="@Imagens.Src(Alojamento.Imagem, Alojamento.UrlImagem)" class="img-thumbnail"
+                         style="width:150px" title="@Alojamento.UrlImagem" alt="Imagem do alojamento" />
+                </div>
+                @* Opcional: se não se escolher nada, a imagem atual mantém-se. *@
+                <div class="mb-3">
+                    <label for="imagem" class="form-label">Nova imagem:</label>
+                    <InputFile id="imagem" OnChange="CarregaImagem" accept=".png,.jpg,.jpeg" class="form-control" />
+                    <div class="text-danger">@erroImagem</div>
+                </div>
+
                 <div class="mb-3">
                     <label for="nome" class="form-label">Nome:</label>
-                    <InputText id="nome" @bind-Value="Alojamento.Nome" class="form-control" aria-required="true"/>
+                    <InputText id="nome" @bind-Value="Alojamento.Nome" class="form-control" />
                     <ValidationMessage For="() => Alojamento.Nome" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="descricao" class="form-label">Descricao:</label>
-                    <InputText id="descricao" @bind-Value="Alojamento.Descricao" class="form-control" aria-required="true"/>
+                    <label for="descricao" class="form-label">Descrição:</label>
+                    <InputTextArea id="descricao" @bind-Value="Alojamento.Descricao" class="form-control" rows="3" />
                     <ValidationMessage For="() => Alojamento.Descricao" class="text-danger" />
                 </div>
+
+                @* Chaves estrangeiras: em vez de escrever o número (o scaffolder gerou InputNumber),
+                   escolhe-se pelo nome. Cada <option> tem como value o Id do registo. *@
                 <div class="mb-3">
-                    <label for="capacidade" class="form-label">Capacidade:</label>
+                    <label for="hotel" class="form-label">Unidade hoteleira:</label>
+                    <InputSelect id="hotel" @bind-Value="Alojamento.HotelId" class="form-select">
+                        <option value="0">-- escolha a unidade --</option>
+                        @foreach (var h in hoteis)
+                        {
+                            <option value="@h.Id">@h.Nome</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="mb-3">
+                    <label for="categoria" class="form-label">Categoria:</label>
+                    <InputSelect id="categoria" @bind-Value="Alojamento.CategoriaId" class="form-select">
+                        <option value="0">-- escolha a categoria --</option>
+                        @foreach (var c in categorias)
+                        {
+                            <option value="@c.Id">@c.Nome</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="mb-3">
+                    <label for="modo" class="form-label">Modo de disponibilização:</label>
+                    <InputSelect id="modo" @bind-Value="Alojamento.ModoDisponibilizacaoId" class="form-select">
+                        <option value="0">-- escolha o modo --</option>
+                        @foreach (var m in modos)
+                        {
+                            <option value="@m.Id">@m.Nome</option>
+                        }
+                    </InputSelect>
+                    <div class="text-danger">@erroEscolhas</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="capacidade" class="form-label">Capacidade (pessoas):</label>
                     <InputNumber id="capacidade" @bind-Value="Alojamento.Capacidade" class="form-control" />
                     <ValidationMessage For="() => Alojamento.Capacidade" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="numunidades" class="form-label">NumUnidades:</label>
+                    <label for="numunidades" class="form-label">Número de unidades desta tipologia:</label>
                     <InputNumber id="numunidades" @bind-Value="Alojamento.NumUnidades" class="form-control" />
                     <ValidationMessage For="() => Alojamento.NumUnidades" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="preconoite" class="form-label">PrecoNoite:</label>
-                    <InputNumber id="preconoite" @bind-Value="Alojamento.PrecoNoite" class="form-control" aria-required="true"/>
+                    <label for="preconoite" class="form-label">Preço por noite (€):</label>
+                    <InputNumber id="preconoite" @bind-Value="Alojamento.PrecoNoite" class="form-control" />
                     <ValidationMessage For="() => Alojamento.PrecoNoite" class="text-danger" />
                 </div>
+
+                @* Relações N-M: uma caixa de verificação por registo. O formulário não as liga a nenhuma
+                   propriedade do Alojamento: os Id marcados ficam nos dois conjuntos do @code,
+                   e só ao gravar passam para as coleções regimes e caracteristicas. *@
                 <div class="mb-3">
-                    <label for="urlimagem" class="form-label">UrlImagem:</label>
-                    <InputText id="urlimagem" @bind-Value="Alojamento.UrlImagem" class="form-control" />
-                    <ValidationMessage For="() => Alojamento.UrlImagem" class="text-danger" />
+                    <label class="form-label">Regimes alimentares oferecidos:</label>
+                    @foreach (var r in regimes)
+                    {
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="@($"regime-{r.Id}")"
+                                   checked="@regimesEscolhidos.Contains(r.Id)"
+                                   @onchange="e => Marca(regimesEscolhidos, r.Id, e)" />
+                            <label class="form-check-label" for="@($"regime-{r.Id}")">@r.Nome (+@r.Percentagem.ToString("N2") %)</label>
+                        </div>
+                    }
+                    <div class="text-danger">@erroRegimes</div>
                 </div>
                 <div class="mb-3">
-                    <label for="ativo" class="form-label">Ativo:</label>
+                    <label class="form-label">Características:</label>
+                    @foreach (var c in caracteristicas)
+                    {
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="@($"caracteristica-{c.Id}")"
+                                   checked="@caracteristicasEscolhidas.Contains(c.Id)"
+                                   @onchange="e => Marca(caracteristicasEscolhidas, c.Id, e)" />
+                            <label class="form-check-label" for="@($"caracteristica-{c.Id}")">@c.Nome</label>
+                        </div>
+                    }
+                </div>
+
+                <div class="mb-3 form-check">
                     <InputCheckbox id="ativo" @bind-Value="Alojamento.Ativo" class="form-check-input" />
-                    <ValidationMessage For="() => Alojamento.Ativo" class="text-danger" />
+                    <label for="ativo" class="form-check-label">Ativo (visível na aplicação dos clientes)</label>
                 </div>
-                <div class="mb-3">
-                    <label for="hotelid" class="form-label">HotelId:</label>
-                    <InputNumber id="hotelid" @bind-Value="Alojamento.HotelId" class="form-control" />
-                    <ValidationMessage For="() => Alojamento.HotelId" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="categoriaid" class="form-label">CategoriaId:</label>
-                    <InputNumber id="categoriaid" @bind-Value="Alojamento.CategoriaId" class="form-control" />
-                    <ValidationMessage For="() => Alojamento.CategoriaId" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="mododisponibilizacaoid" class="form-label">ModoDisponibilizacaoId:</label>
-                    <InputNumber id="mododisponibilizacaoid" @bind-Value="Alojamento.ModoDisponibilizacaoId" class="form-control" />
-                    <ValidationMessage For="() => Alojamento.ModoDisponibilizacaoId" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+
+                <button type="submit" class="btn btn-primary" title="Gravar">
+                    <img src="/img/saveicon.png" style="height:30px" alt="Gravar" />
+                </button>
+                <a href="/alojamentos" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
             </EditForm>
         </div>
     </div>
 }
 
-<div>
-    <a href="/alojamentos">Back to List</a>
-</div>
-
 @code {
+    // Erro da última tentativa de gravar, mostrado no <Aviso> do topo.
+    private string? erro;
+
+    // O ?id=... do endereço (por exemplo /alojamentos/edit?id=3).
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
     [SupplyParameterFromForm]
     private Alojamento? Alojamento { get; set; }
 
+    // As listas das três caixas de escolha e das duas listas de caixas de verificação.
+    private List<Hotel> hoteis = [];
+    private List<Categoria> categorias = [];
+    private List<ModoDisponibilizacao> modos = [];
+    private List<RegimeAlimentar> regimes = [];
+    private List<Caracteristica> caracteristicas = [];
+
+    // Os Id dos regimes e das características marcados no formulário.
+    // HashSet: um conjunto, sem repetidos; Add, Remove e Contains são imediatos.
+    private HashSet<int> regimesEscolhidos = [];
+    private HashSet<int> caracteristicasEscolhidas = [];
+
+    private string? erroImagem;
+    private string? erroEscolhas;
+    private string? erroRegimes;
+
+    // Read: o alojamento a editar, com os seus regimes e características, e as listas do formulário.
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        Alojamento ??= await context.Alojamentos.FirstOrDefaultAsync(m => m.Id == Id);
+        Alojamento ??= await context.Alojamentos
+            .Include(a => a.regimes)
+            .Include(a => a.caracteristicas)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (Alojamento is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        // As caixas começam marcadas com o que o alojamento já tem.
+        regimesEscolhidos = Alojamento.regimes.Select(r => r.Id).ToHashSet();
+        caracteristicasEscolhidas = Alojamento.caracteristicas.Select(c => c.Id).ToHashSet();
+
+        // Oferecem-se os registos ativos e também os que o alojamento já usa, mesmo que entretanto desativados.
+        // AsNoTracking: as listas são só para mostrar (a mesma regra do Edit das campanhas).
+        hoteis = await context.Hoteis.AsNoTracking().OrderBy(h => h.Nome).ToListAsync();
+        modos = await context.ModosDisponibilizacao.AsNoTracking().OrderBy(m => m.Nome).ToListAsync();
+        categorias = (await context.Categorias.AsNoTracking().OrderBy(c => c.Nome).ToListAsync())
+            .Where(c => c.Ativo || c.Id == Alojamento.CategoriaId).ToList();
+        regimes = (await context.RegimesAlimentares.AsNoTracking().OrderBy(r => r.Percentagem).ToListAsync())
+            .Where(r => r.Ativo || regimesEscolhidos.Contains(r.Id)).ToList();
+        caracteristicas = (await context.Caracteristicas.AsNoTracking().OrderBy(c => c.Nome).ToListAsync())
+            .Where(c => c.Ativo || caracteristicasEscolhidas.Contains(c.Id)).ToList();
+    }
+
+    // Recebe o ficheiro escolhido e substitui a imagem do objeto (ainda não grava).
+    private async Task CarregaImagem(InputFileChangeEventArgs e)
+    {
+        erroImagem = Imagens.Valida(e.File.Name, e.File.Size);
+        if (erroImagem is not null || Alojamento is null)
+        {
+            return;
+        }
+
+        // O ficheiro chega do browser como IBrowserFile; o serviço só precisa do conteúdo (um Stream).
+        await using var conteudo = e.File.OpenReadStream(Imagens.TamanhoMaximo);
+        Alojamento.Imagem = await Imagens.LerBytesAsync(conteudo);
+        Alojamento.UrlImagem = e.File.Name;
+    }
+
+    // Uma caixa de verificação mudou: e.Value é true (marcada) ou false (desmarcada).
+    private void Marca(HashSet<int> conjunto, int id, ChangeEventArgs e)
+    {
+        if (e.Value is true)
+        {
+            conjunto.Add(id);
+        }
+        else
+        {
+            conjunto.Remove(id);
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    // As verificações que as anotações não fazem. Devolve false se faltar alguma coisa.
+    private bool EscolhasValidas()
+    {
+        // As três chaves estrangeiras são obrigatórias e 0 não é o Id de nenhum registo.
+        erroEscolhas = Alojamento!.HotelId == 0 || Alojamento!.CategoriaId == 0 || Alojamento!.ModoDisponibilizacaoId == 0
+            ? "Escolha a unidade hoteleira, a categoria e o modo de disponibilização."
+            : null;
+
+        // Cada alojamento oferece pelo menos um regime alimentar (RN32).
+        erroRegimes = regimesEscolhidos.Count == 0
+            ? "Escolha pelo menos um regime alimentar."
+            : null;
+
+        return erroEscolhas is null && erroRegimes is null;
+    }
+
+    // Update. Aqui não serve o Attach + Modified das outras páginas: esse UPDATE só altera
+    // as colunas da tabela Alojamentos, e as relações N-M estão noutras duas tabelas.
+    // Lê-se o alojamento com as suas coleções, altera-se esse objeto, e o EF Core compara
+    // o antes e o depois: faz o UPDATE e os INSERT e DELETE das linhas de ligação.
     private async Task UpdateAlojamento()
     {
+        erro = null;
+
+        if (!EscolhasValidas())
+        {
+            return;
+        }
+
         using var context = DbFactory.CreateDbContext();
-        context.Attach(Alojamento!).State = EntityState.Modified;
+
+        // Na mesma unidade não há dois alojamentos com o mesmo nome (índice único sobre HotelId e Nome).
+        if (await context.Alojamentos.AnyAsync(x => x.HotelId == Alojamento!.HotelId
+                                                 && x.Nome == Alojamento.Nome && x.Id != Alojamento.Id))
+        {
+            erro = $"Esta unidade já tem um alojamento com o nome \"{Alojamento!.Nome}\".";
+            return;
+        }
+
+        // O alojamento tal como está na base de dados, seguido por este contexto.
+        var existente = await context.Alojamentos
+            .Include(a => a.regimes)
+            .Include(a => a.caracteristicas)
+            .FirstOrDefaultAsync(a => a.Id == Alojamento!.Id);
+
+        if (existente is null)
+        {
+            // Alguém apagou o registo entretanto.
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        // Copia para ele os valores simples do formulário (nome, preço, chaves estrangeiras, imagem, ...).
+        context.Entry(existente).CurrentValues.SetValues(Alojamento!);
+
+        // Acerta as duas coleções: ficam só os escolhidos. O que deixou de estar é apagado
+        // das tabelas de ligação; o que entrou é inserido; o que se manteve não é tocado.
+        var todosRegimes = await context.RegimesAlimentares.ToListAsync();
+        existente.regimes.Clear();
+        foreach (var r in todosRegimes.Where(r => regimesEscolhidos.Contains(r.Id)))
+        {
+            existente.regimes.Add(r);
+        }
+
+        var todasCaracteristicas = await context.Caracteristicas.ToListAsync();
+        existente.caracteristicas.Clear();
+        foreach (var c in todasCaracteristicas.Where(c => caracteristicasEscolhidas.Contains(c.Id)))
+        {
+            existente.caracteristicas.Add(c);
+        }
 
         try
         {
             await context.SaveChangesAsync();
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateException)
         {
-            if (!AlojamentoExists(Alojamento!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            // A base de dados recusou (índice único ou restrição CHECK).
+            erro = "Não foi possível gravar: a base de dados recusou os dados.";
+            return;
         }
 
+        Mensagens.Sucesso("Alojamento alterado.");
         NavigationManager.NavigateTo("/alojamentos");
-    }
-
-    private bool AlojamentoExists(int id)
-    {
-        using var context = DbFactory.CreateDbContext();
-        return context.Alojamentos.Any(e => e.Id == id);
     }
 }

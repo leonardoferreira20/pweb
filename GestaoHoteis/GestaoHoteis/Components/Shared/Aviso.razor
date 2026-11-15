@@ -1,0 +1,41 @@
+﻿@* Mostra no topo da página uma mensagem de sucesso (verde) ou de erro (vermelha).
+   Duas origens possíveis:
+   - a mensagem guardada no serviço IMensagensService por uma página anterior
+     (por exemplo, "Categoria criada." depois de gravar);
+   - um erro da própria página, passado no parâmetro Erro (por exemplo, nome repetido).
+   As classes alert, alert-success, alert-danger e btn-close são do Bootstrap. *@
+@* O nosso serviço de mensagens, pedido pela interface (pasta Interfaces). *@
+@inject IMensagensService Mensagens
+
+@if (mensagem is not null)
+{
+    <div class="alert @(mensagem.Sucesso ? "alert-success" : "alert-danger") alert-dismissible" role="alert">
+        @mensagem.Texto
+        <button type="button" class="btn-close" aria-label="Fechar" @onclick="Fecha"></button>
+    </div>
+}
+
+@code {
+    // Um erro da própria página. Opcional: as listagens não o usam.
+    [Parameter]
+    public string? Erro { get; set; }
+
+    private Mensagem? mensagem;
+
+    // Ciclo de vida: ao criar o componente, vai buscar a mensagem guardada no serviço.
+    protected override void OnInitialized()
+    {
+        mensagem = Mensagens.Retira();
+    }
+
+    // Ciclo de vida: corre sempre que a página lhe passa um valor novo em Erro.
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(Erro))
+        {
+            mensagem = new Mensagem(Erro, false);
+        }
+    }
+
+    private void Fecha() => mensagem = null;
+}

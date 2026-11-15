@@ -1,33 +1,53 @@
-@page "/regimealimentars"
+﻿@page "/regimes"
+@* Do framework: o [Authorize], o EF Core (IDbContextFactory, ...) e a QuickGrid *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
+@* Nossos: as entidades e o contexto (já estão no _Imports.razor; o scaffolding repete-os) *@
 @using GestaoHoteis.Entities
 @using GestaoHoteis.Data
+@* Quem pode abrir: Administrador ou Funcionario (listar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* O Blazor chama o DisposeAsync quando se sai da página: liberta o contexto *@
 @implements IAsyncDisposable
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Regimes alimentares</PageTitle>
 
-<h1>Index</h1>
+<h1>Listagem de Regimes Alimentares</h1>
+
+@* Mensagem da última operação (por exemplo, "Regime alimentar criado."), verde ou vermelha. *@
+<Aviso />
 
 <p>
-    <a href="regimealimentars/create">Create New</a>
+    <a href="regimes/create" title="Novo regime alimentar">
+        <img src="/img/novo.png" style="height:50px" alt="Novo regime alimentar" />
+    </a>
 </p>
 
-<QuickGrid Class="table" Items="context.RegimesAlimentares">
-    <PropertyColumn Property="regimealimentar => regimealimentar.Nome" />
-    <PropertyColumn Property="regimealimentar => regimealimentar.Descricao" />
-    <PropertyColumn Property="regimealimentar => regimealimentar.Percentagem" />
-    <PropertyColumn Property="regimealimentar => regimealimentar.Ativo" />
+@* Items: a consulta que a QuickGrid executa. Por ordem alfabética do nome. *@
+<QuickGrid Class="table" Items="context.RegimesAlimentares.OrderBy(regime => regime.Nome)">
+    <PropertyColumn Property="regime => regime.Nome" Title="Nome" />
+    <PropertyColumn Property="regime => regime.Descricao" Title="Descrição" />
+    <PropertyColumn Property="regime => regime.Percentagem" Title="Acréscimo" Format="N2" />
+    <TemplateColumn Title="Ativo" Context="regime">@(regime.Ativo ? "Sim" : "Não")</TemplateColumn>
 
-    <TemplateColumn Context="regimealimentar">
-        <a href="@($"regimealimentars/edit?id={regimealimentar.Id}")">Edit</a> |
-        <a href="@($"regimealimentars/details?id={regimealimentar.Id}")">Details</a> |
-        <a href="@($"regimealimentars/delete?id={regimealimentar.Id}")">Delete</a>
+    <TemplateColumn Context="regime">
+        <a href="@($"regimes/edit?id={regime.Id}")" title="Editar">
+            <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+        </a> |
+        <a href="@($"regimes/details?id={regime.Id}")" title="Detalhes">
+            <img src="/img/detailsicon.png" style="height:30px" alt="Detalhes" />
+        </a>
+        | <a href="@($"regimes/delete?id={regime.Id}")" title="Apagar">
+            <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+        </a>
     </TemplateColumn>
 </QuickGrid>
 
 @code {
+    // Um contexto para toda a vida da página: a QuickGrid usa-o sempre que consulta.
     private ApplicationDbContext context = default!;
 
     protected override void OnInitialized()

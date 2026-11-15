@@ -1,0 +1,43 @@
+﻿@* Os cinco campos de uma morada, para usar dentro de um <EditForm>.
+   Fica num componente à parte porque a morada aparece em vários formulários:
+   agora nas unidades hoteleiras; mais à frente, no registo do cliente e na reserva.
+   A página entrega o objeto Morada a preencher e a lista de erros a mostrar. *@
+<fieldset class="border rounded p-3 mb-3">
+    <legend class="float-none w-auto px-2 fs-6">Morada</legend>
+
+    <div class="mb-3">
+        <label for="rua" class="form-label">Rua:</label>
+        <InputText id="rua" @bind-Value="Morada.Rua" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label for="codigopostal" class="form-label">Código postal:</label>
+        <InputText id="codigopostal" @bind-Value="Morada.CodigoPostal" class="form-control" placeholder="1234-567" />
+    </div>
+    <div class="mb-3">
+        <label for="localidade" class="form-label">Localidade:</label>
+        <InputText id="localidade" @bind-Value="Morada.Localidade" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label for="distrito" class="form-label">Distrito:</label>
+        <InputText id="distrito" @bind-Value="Morada.Distrito" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label for="pais" class="form-label">País:</label>
+        <InputText id="pais" @bind-Value="Morada.Pais" class="form-control" />
+    </div>
+
+    @* Os erros da morada, que a página validou à mão (ver o método ValidaMorada da página). *@
+    @foreach (var e in Erros)
+    {
+        <div class="text-danger">@e</div>
+    }
+</fieldset>
+
+@code {
+    // [EditorRequired]: o compilador avisa se a página usar <MoradaCampos> sem dizer qual é a morada.
+    [Parameter, EditorRequired]
+    public Morada Morada { get; set; } = default!;
+
+    [Parameter]
+    public IEnumerable<string> Erros { get; set; } = [];
+}

@@ -1,31 +1,51 @@
-@page "/mododisponibilizacaos"
+﻿@page "/modos"
+@* Do framework: o [Authorize], o EF Core (IDbContextFactory, ...) e a QuickGrid *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
+@* Nossos: as entidades e o contexto (já estão no _Imports.razor; o scaffolding repete-os) *@
 @using GestaoHoteis.Entities
 @using GestaoHoteis.Data
+@* Quem pode abrir: Administrador ou Funcionario (listar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* O Blazor chama o DisposeAsync quando se sai da página: liberta o contexto *@
 @implements IAsyncDisposable
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Modos de disponibilização</PageTitle>
 
-<h1>Index</h1>
+<h1>Listagem de Modos de Disponibilização</h1>
+
+@* Mensagem da última operação (por exemplo, "Modo de disponibilização criado."), verde ou vermelha. *@
+<Aviso />
 
 <p>
-    <a href="mododisponibilizacaos/create">Create New</a>
+    <a href="modos/create" title="Novo modo de disponibilização">
+        <img src="/img/novo.png" style="height:50px" alt="Novo modo de disponibilização" />
+    </a>
 </p>
 
-<QuickGrid Class="table" Items="context.ModosDisponibilizacao">
-    <PropertyColumn Property="mododisponibilizacao => mododisponibilizacao.Nome" />
-    <PropertyColumn Property="mododisponibilizacao => mododisponibilizacao.Descricao" />
+@* Items: a consulta que a QuickGrid executa. Por ordem alfabética do nome. *@
+<QuickGrid Class="table" Items="context.ModosDisponibilizacao.OrderBy(modo => modo.Nome)">
+    <PropertyColumn Property="modo => modo.Nome" Title="Nome" />
+    <PropertyColumn Property="modo => modo.Descricao" Title="Descrição" />
 
-    <TemplateColumn Context="mododisponibilizacao">
-        <a href="@($"mododisponibilizacaos/edit?id={mododisponibilizacao.Id}")">Edit</a> |
-        <a href="@($"mododisponibilizacaos/details?id={mododisponibilizacao.Id}")">Details</a> |
-        <a href="@($"mododisponibilizacaos/delete?id={mododisponibilizacao.Id}")">Delete</a>
+    <TemplateColumn Context="modo">
+        <a href="@($"modos/edit?id={modo.Id}")" title="Editar">
+            <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+        </a> |
+        <a href="@($"modos/details?id={modo.Id}")" title="Detalhes">
+            <img src="/img/detailsicon.png" style="height:30px" alt="Detalhes" />
+        </a>
+        | <a href="@($"modos/delete?id={modo.Id}")" title="Apagar">
+            <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+        </a>
     </TemplateColumn>
 </QuickGrid>
 
 @code {
+    // Um contexto para toda a vida da página: a QuickGrid usa-o sempre que consulta.
     private ApplicationDbContext context = default!;
 
     protected override void OnInitialized()

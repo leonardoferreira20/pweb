@@ -1,43 +1,83 @@
-@page "/categoria/delete"
+﻿@page "/categorias/delete"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (apagar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IMensagensService Mensagens
 
-<PageTitle>Delete</PageTitle>
+<PageTitle>Apagar</PageTitle>
 
-<h1>Delete</h1>
+<h1>Apagar registo</h1>
 
-<p>Are you sure you want to delete this?</p>
+@* Erros desta página (a base de dados recusou apagar), a vermelho. *@
+<Aviso Erro="@erro" />
+
 <div>
-    <h2>Categoria</h2>
+    <h4>Categoria</h4>
     <hr />
     @if (categoria is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>A carregar...</em></p>
     }
-    else {
+    else
+    {
         <dl class="row">
             <dt class="col-sm-2">Nome</dt>
             <dd class="col-sm-10">@categoria.Nome</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Descricao</dt>
+            <dt class="col-sm-2">Descrição</dt>
             <dd class="col-sm-10">@categoria.Descricao</dd>
+            <dt class="col-sm-2">Ativa</dt>
+            <dd class="col-sm-10">@(categoria.Ativo ? "Sim" : "Não")</dd>
         </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Ativo</dt>
-            <dd class="col-sm-10">@categoria.Ativo</dd>
-        </dl>
-        <EditForm method="post" Model="categoria" OnValidSubmit="DeleteCategoria" FormName="delete" Enhance>
-            <button type="submit" class="btn btn-danger" disabled="@(categoria is null)">Delete</button> |
-            <a href="/categoria">Back to List</a>
-        </EditForm>
+
+        @* Uma categoria só pode ser apagada se não existirem alojamentos associados (RN18). *@
+        @if (EmUso)
+        {
+            <p class="text-danger">
+                Esta categoria não pode ser apagada: tem @nAlojamentos alojamento(s) associado(s). Em alternativa, pode ser desativada na página de edição.
+            </p>
+            <div>
+                <a href="@($"/categorias/edit?id={categoria.Id}")" title="Editar">
+                    <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+                </a> |
+                <a href="/categorias" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
+            </div>
+        }
+        else
+        {
+            <h5>Tem a certeza de que quer apagar este registo?</h5>
+            <EditForm method="post" Model="categoria" OnValidSubmit="DeleteCategoria" FormName="delete" Enhance>
+                <button type="submit" class="btn btn-danger" title="Apagar">
+                    <img src="/img/deleteicon.png" style="height:30px" alt="Apagar" />
+                </button> |
+                <a href="/categorias" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
+            </EditForm>
+        }
     }
 </div>
 
 @code {
+    // Erro da última tentativa de apagar, mostrado no <Aviso> do topo.
+    private string? erro;
+
     private Categoria? categoria;
+
+    // Quantos alojamentos usam esta categoria.
+    private int nAlojamentos;
+
+    // Com registos dependentes, a página não mostra o botão de apagar.
+    private bool EmUso => nAlojamentos > 0;
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -50,14 +90,30 @@
         if (categoria is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        nAlojamentos = await context.Alojamentos.CountAsync(a => a.CategoriaId == Id);
     }
 
+    // Delete: Remove marca o objeto para apagar; SaveChangesAsync faz o DELETE.
     private async Task DeleteCategoria()
     {
+        erro = null;
         using var context = DbFactory.CreateDbContext();
         context.Categorias.Remove(categoria!);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/categoria");
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Entretanto alguém associou um alojamento: a base de dados recusou (chave estrangeira com Restrict).
+            erro = "Não foi possível apagar: há registos que dependem desta categoria.";
+            return;
+        }
+
+        Mensagens.Sucesso("Categoria apagada.");
+        NavigationManager.NavigateTo("/categorias");
     }
 }

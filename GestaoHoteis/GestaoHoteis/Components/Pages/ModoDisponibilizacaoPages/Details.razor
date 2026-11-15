@@ -1,36 +1,52 @@
-@page "/mododisponibilizacaos/details"
+﻿@page "/modos/details"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (ver o detalhe; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Detalhes</PageTitle>
 
-<h1>Details</h1>
+<h1>Detalhes do registo</h1>
 
 <div>
-    <h2>ModoDisponibilizacao</h2>
+    <h4>Modo de disponibilização</h4>
     <hr />
-    @if (mododisponibilizacao is null)
+    @if (modo is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>A carregar...</em></p>
     }
-    else {
+    else
+    {
         <dl class="row">
             <dt class="col-sm-2">Nome</dt>
-            <dd class="col-sm-10">@mododisponibilizacao.Nome</dd>
-            <dt class="col-sm-2">Descricao</dt>
-            <dd class="col-sm-10">@mododisponibilizacao.Descricao</dd>
+            <dd class="col-sm-10">@modo.Nome</dd>
+            <dt class="col-sm-2">Descrição</dt>
+            <dd class="col-sm-10">@modo.Descricao</dd>
+            <dt class="col-sm-2">Alojamentos</dt>
+            <dd class="col-sm-10">@nAlojamentos</dd>
         </dl>
         <div>
-            <a href="@($"/mododisponibilizacaos/edit?id={mododisponibilizacao.Id}")">Edit</a> |
-            <a href="@($"/mododisponibilizacaos")">Back to List</a>
+            <a href="@($"/modos/edit?id={modo.Id}")" title="Editar">
+                <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+            </a> |
+            <a href="/modos" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </div>
     }
 </div>
 
 @code {
-    private ModoDisponibilizacao? mododisponibilizacao;
+    private ModoDisponibilizacao? modo;
+
+    // Quantos alojamentos usam este modo de disponibilização.
+    private int nAlojamentos;
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -38,11 +54,14 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        mododisponibilizacao = await context.ModosDisponibilizacao.FirstOrDefaultAsync(m => m.Id == Id);
+        modo = await context.ModosDisponibilizacao.FirstOrDefaultAsync(m => m.Id == Id);
 
-        if (mododisponibilizacao is null)
+        if (modo is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        nAlojamentos = await context.Alojamentos.CountAsync(a => a.ModoDisponibilizacaoId == Id);
     }
 }

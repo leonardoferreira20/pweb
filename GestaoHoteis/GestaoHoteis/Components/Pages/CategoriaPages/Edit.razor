@@ -1,18 +1,29 @@
-@page "/categoria/edit"
+﻿@page "/categorias/edit"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (editar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IMensagensService Mensagens
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Editar categoria</PageTitle>
 
-<h1>Edit</h1>
+<h1>Editar registo</h1>
 
-<h2>Categoria</h2>
+@* Erros desta página (por exemplo, nome repetido), a vermelho. *@
+<Aviso Erro="@erro" />
+
+<h4>Categoria</h4>
 <hr />
 @if (Categoria is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>A carregar...</em></p>
 }
 else
 {
@@ -20,40 +31,47 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="Categoria" OnValidSubmit="UpdateCategoria" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary class="text-danger" role="alert" />
                 <input type="hidden" name="Categoria.Id" value="@Categoria.Id" />
+
                 <div class="mb-3">
                     <label for="nome" class="form-label">Nome:</label>
-                    <InputText id="nome" @bind-Value="Categoria.Nome" class="form-control" aria-required="true"/>
+                    <InputText id="nome" @bind-Value="Categoria.Nome" class="form-control" />
                     <ValidationMessage For="() => Categoria.Nome" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="descricao" class="form-label">Descricao:</label>
+                    <label for="descricao" class="form-label">Descrição:</label>
                     <InputText id="descricao" @bind-Value="Categoria.Descricao" class="form-control" />
                     <ValidationMessage For="() => Categoria.Descricao" class="text-danger" />
                 </div>
-                <div class="mb-3">
-                    <label for="ativo" class="form-label">Ativo:</label>
+                <div class="mb-3 form-check">
                     <InputCheckbox id="ativo" @bind-Value="Categoria.Ativo" class="form-check-input" />
-                    <ValidationMessage For="() => Categoria.Ativo" class="text-danger" />
+                    <label for="ativo" class="form-check-label">Ativa</label>
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+
+                <button type="submit" class="btn btn-primary" title="Gravar">
+                    <img src="/img/saveicon.png" style="height:30px" alt="Gravar" />
+                </button>
+                <a href="/categorias" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
             </EditForm>
         </div>
     </div>
 }
 
-<div>
-    <a href="/categoria">Back to List</a>
-</div>
-
 @code {
+    // Erro da última tentativa de gravar, mostrado no <Aviso> do topo.
+    private string? erro;
+
+    // O ?id=... do endereço (por exemplo /categorias/edit?id=3).
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
     [SupplyParameterFromForm]
     private Categoria? Categoria { get; set; }
 
+    // Read: vai buscar à base de dados a categoria com este Id.
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
@@ -65,11 +83,19 @@ else
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    // Update: Attach + Modified diz ao EF que o objeto existe e mudou; SaveChangesAsync faz o UPDATE.
     private async Task UpdateCategoria()
     {
+        erro = null;
         using var context = DbFactory.CreateDbContext();
+
+        // Nome repetido: avisa já, em vez de deixar a base de dados recusar (índice único).
+        if (await context.Categorias.AnyAsync(x => x.Nome == Categoria!.Nome && x.Id != Categoria.Id))
+        {
+            erro = $"Já existe uma categoria com o nome \"{Categoria!.Nome}\".";
+            return;
+        }
+
         context.Attach(Categoria!).State = EntityState.Modified;
 
         try
@@ -78,6 +104,7 @@ else
         }
         catch (DbUpdateConcurrencyException)
         {
+            // Alguém apagou o registo entretanto?
             if (!CategoriaExists(Categoria!.Id))
             {
                 NavigationManager.NavigateTo("notfound");
@@ -87,8 +114,15 @@ else
                 throw;
             }
         }
+        catch (DbUpdateException)
+        {
+            // A base de dados recusou (índice único ou restrição CHECK).
+            erro = "Não foi possível gravar: a base de dados recusou os dados.";
+            return;
+        }
 
-        NavigationManager.NavigateTo("/categoria");
+        Mensagens.Sucesso("Categoria alterada.");
+        NavigationManager.NavigateTo("/categorias");
     }
 
     private bool CategoriaExists(int id)

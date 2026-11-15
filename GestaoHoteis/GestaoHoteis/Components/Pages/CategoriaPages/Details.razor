@@ -1,38 +1,54 @@
-@page "/categoria/details"
+﻿@page "/categorias/details"
+@* Do framework: o [Authorize] e o EF Core (IDbContextFactory, Include, ...) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (ver o detalhe; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Detalhes</PageTitle>
 
-<h1>Details</h1>
+<h1>Detalhes do registo</h1>
 
 <div>
-    <h2>Categoria</h2>
+    <h4>Categoria</h4>
     <hr />
     @if (categoria is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>A carregar...</em></p>
     }
-    else {
+    else
+    {
         <dl class="row">
             <dt class="col-sm-2">Nome</dt>
             <dd class="col-sm-10">@categoria.Nome</dd>
-            <dt class="col-sm-2">Descricao</dt>
+            <dt class="col-sm-2">Descrição</dt>
             <dd class="col-sm-10">@categoria.Descricao</dd>
-            <dt class="col-sm-2">Ativo</dt>
-            <dd class="col-sm-10">@categoria.Ativo</dd>
+            <dt class="col-sm-2">Ativa</dt>
+            <dd class="col-sm-10">@(categoria.Ativo ? "Sim" : "Não")</dd>
+            <dt class="col-sm-2">Alojamentos</dt>
+            <dd class="col-sm-10">@nAlojamentos</dd>
         </dl>
         <div>
-            <a href="@($"/categoria/edit?id={categoria.Id}")">Edit</a> |
-            <a href="@($"/categoria")">Back to List</a>
+            <a href="@($"/categorias/edit?id={categoria.Id}")" title="Editar">
+                <img src="/img/editicon.png" style="height:30px" alt="Editar" />
+            </a> |
+            <a href="/categorias" class="btn btn-outline-secondary" title="Voltar à listagem">
+                <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+            </a>
         </div>
     }
 </div>
 
 @code {
     private Categoria? categoria;
+
+    // Quantos alojamentos usam esta categoria.
+    private int nAlojamentos;
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -45,6 +61,9 @@
         if (categoria is null)
         {
             NavigationManager.NavigateTo("notfound");
+            return;
         }
+
+        nAlojamentos = await context.Alojamentos.CountAsync(a => a.CategoriaId == Id);
     }
 }

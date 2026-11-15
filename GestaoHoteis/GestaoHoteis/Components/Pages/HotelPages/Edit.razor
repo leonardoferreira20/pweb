@@ -1,83 +1,120 @@
-@page "/hotels/edit"
+﻿@page "/hoteis/edit"
+@* Do framework: o [Authorize], o EF Core e as classes de validação (Validator, ValidationResult) *@
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@using System.ComponentModel.DataAnnotations
+@* Nosso: as entidades (já estão no _Imports.razor; o scaffolding repete-as) *@
 @using GestaoHoteis.Entities
+@* Quem pode abrir: Administrador ou Funcionario (editar; quadro de permissões, secção 3.0) *@
+@attribute [Authorize(Roles = "Administrador,Funcionario")]
+@* Serviços do framework, pedidos ao contentor de injeção de dependências *@
 @inject IDbContextFactory<GestaoHoteis.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@* Serviços nossos, pedidos pela interface (pasta Interfaces) *@
+@inject IImagensService Imagens
+@inject IMensagensService Mensagens
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Editar unidade hoteleira</PageTitle>
 
-<h1>Edit</h1>
+<h1>Editar registo</h1>
 
-<h2>Hotel</h2>
+@* Erros desta página (por exemplo, nome repetido), a vermelho. *@
+<Aviso Erro="@erro" />
+
+<h4>Unidade hoteleira</h4>
 <hr />
 @if (Hotel is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>A carregar...</em></p>
 }
 else
 {
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-5">
             <EditForm method="post" Model="Hotel" OnValidSubmit="UpdateHotel" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary class="text-danger" role="alert" />
                 <input type="hidden" name="Hotel.Id" value="@Hotel.Id" />
+
+                @* A imagem atual, que veio da base de dados; muda logo que se escolhe outra. *@
+                <div class="mb-3">
+                    <img src="@Imagens.Src(Hotel.Imagem, Hotel.UrlImagem)" class="img-thumbnail"
+                         style="width:150px" title="@Hotel.UrlImagem" alt="Imagem da unidade hoteleira" />
+                </div>
+                @* Opcional: se não se escolher nada, a imagem atual mantém-se. *@
+                <div class="mb-3">
+                    <label for="imagem" class="form-label">Nova imagem:</label>
+                    <InputFile id="imagem" OnChange="CarregaImagem" accept=".png,.jpg,.jpeg" class="form-control" />
+                    <div class="text-danger">@erroImagem</div>
+                </div>
+
                 <div class="mb-3">
                     <label for="nome" class="form-label">Nome:</label>
-                    <InputText id="nome" @bind-Value="Hotel.Nome" class="form-control" aria-required="true"/>
+                    <InputText id="nome" @bind-Value="Hotel.Nome" class="form-control" />
                     <ValidationMessage For="() => Hotel.Nome" class="text-danger" />
                 </div>
+                @* Tipo: só há dois valores possíveis, os das constantes da classe TipoHotel.
+                   Escolhe-se numa caixa, em vez de se escrever (o scaffolder gerou um InputText). *@
                 <div class="mb-3">
                     <label for="tipo" class="form-label">Tipo:</label>
-                    <InputText id="tipo" @bind-Value="Hotel.Tipo" class="form-control" />
-                    <ValidationMessage For="() => Hotel.Tipo" class="text-danger" />
+                    <InputSelect id="tipo" @bind-Value="Hotel.Tipo" class="form-select">
+                        <option value="@TipoHotel.Hotel">Hotel</option>
+                        <option value="@TipoHotel.Aparthotel">Aparthotel</option>
+                    </InputSelect>
                 </div>
                 <div class="mb-3">
-                    <label for="estrelas" class="form-label">Estrelas:</label>
+                    <label for="estrelas" class="form-label">Classificação (estrelas):</label>
                     <InputNumber id="estrelas" @bind-Value="Hotel.Estrelas" class="form-control" />
                     <ValidationMessage For="() => Hotel.Estrelas" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="descricao" class="form-label">Descricao:</label>
-                    <InputText id="descricao" @bind-Value="Hotel.Descricao" class="form-control" aria-required="true"/>
+                    <label for="descricao" class="form-label">Descrição:</label>
+                    <InputTextArea id="descricao" @bind-Value="Hotel.Descricao" class="form-control" rows="3" />
                     <ValidationMessage For="() => Hotel.Descricao" class="text-danger" />
                 </div>
-                <div class="mb-3">
-                    <label for="urlimagem" class="form-label">UrlImagem:</label>
-                    <InputText id="urlimagem" @bind-Value="Hotel.UrlImagem" class="form-control" />
-                    <ValidationMessage For="() => Hotel.UrlImagem" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="ativo" class="form-label">Ativo:</label>
+                <div class="mb-3 form-check">
                     <InputCheckbox id="ativo" @bind-Value="Hotel.Ativo" class="form-check-input" />
-                    <ValidationMessage For="() => Hotel.Ativo" class="text-danger" />
+                    <label for="ativo" class="form-check-label">Ativa (visível na aplicação dos clientes)</label>
                 </div>
-                <div class="mb-3">
-                    <label for="moradaid" class="form-label">MoradaId:</label>
-                    <InputNumber id="moradaid" @bind-Value="Hotel.MoradaId" class="form-control" />
-                    <ValidationMessage For="() => Hotel.MoradaId" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+
+                @* A morada: os cinco campos estão no componente partilhado MoradaCampos. *@
+                <MoradaCampos Morada="Hotel.morada" Erros="errosMorada" />
+
+                <button type="submit" class="btn btn-primary" title="Gravar">
+                    <img src="/img/saveicon.png" style="height:30px" alt="Gravar" />
+                </button>
+                <a href="/hoteis" class="btn btn-outline-secondary" title="Voltar à listagem">
+                    <img src="/img/backicon.png" style="height:30px" alt="Voltar" />
+                </a>
             </EditForm>
         </div>
     </div>
 }
 
-<div>
-    <a href="/hotels">Back to List</a>
-</div>
-
 @code {
+    // Erro da última tentativa de gravar, mostrado no <Aviso> do topo.
+    private string? erro;
+
+    // O ?id=... do endereço (por exemplo /hoteis/edit?id=3).
     [SupplyParameterFromQuery]
     private int Id { get; set; }
 
     [SupplyParameterFromForm]
     private Hotel? Hotel { get; set; }
 
+    // Mensagem de erro da imagem (tipo de ficheiro ou tamanho não aceites).
+    private string? erroImagem;
+
+    // Os erros da morada, mostrados dentro do <MoradaCampos>.
+    private List<string> errosMorada = [];
+
+    // Read: a unidade com este Id, já com a sua morada (Include) e a imagem (bytes).
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        Hotel ??= await context.Hoteis.FirstOrDefaultAsync(m => m.Id == Id);
+        Hotel ??= await context.Hoteis
+            .Include(h => h.morada)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (Hotel is null)
         {
@@ -85,12 +122,56 @@ else
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    // Recebe o ficheiro escolhido e substitui a imagem do objeto (ainda não grava).
+    private async Task CarregaImagem(InputFileChangeEventArgs e)
+    {
+        erroImagem = Imagens.Valida(e.File.Name, e.File.Size);
+        if (erroImagem is not null || Hotel is null)
+        {
+            return;
+        }
+
+        // O ficheiro chega do browser como IBrowserFile; o serviço só precisa do conteúdo (um Stream).
+        await using var conteudo = e.File.OpenReadStream(Imagens.TamanhoMaximo);
+        Hotel.Imagem = await Imagens.LerBytesAsync(conteudo);
+        Hotel.UrlImagem = e.File.Name;
+    }
+
+    // O DataAnnotationsValidator só valida as propriedades do Model do formulário (Hotel).
+    // As anotações da classe Morada ([Required], formato do código postal) não são vistas:
+    // verificam-se aqui, com a classe Validator, e os erros vão para o <MoradaCampos>.
+    private bool MoradaValida()
+    {
+        var resultados = new List<ValidationResult>();
+        Validator.TryValidateObject(Hotel!.morada, new ValidationContext(Hotel!.morada),
+                                    resultados, validateAllProperties: true);
+        errosMorada = resultados.Select(r => r.ErrorMessage!).ToList();
+        return errosMorada.Count == 0;
+    }
+
+    // Update: Attach + Modified diz ao EF que o objeto existe e mudou; SaveChangesAsync faz o UPDATE.
     private async Task UpdateHotel()
     {
+        erro = null;
+
+        if (!MoradaValida())
+        {
+            return;
+        }
+
         using var context = DbFactory.CreateDbContext();
+
+        // Nome repetido: avisa já, em vez de deixar a base de dados recusar (índice único).
+        if (await context.Hoteis.AnyAsync(x => x.Nome == Hotel!.Nome && x.Id != Hotel.Id))
+        {
+            erro = $"Já existe uma unidade hoteleira com o nome \"{Hotel!.Nome}\".";
+            return;
+        }
+
+        // Attach segue as navegações e passa a seguir também a morada, mas como "sem alterações".
+        // São dois objetos e duas tabelas: marcam-se os dois como alterados (dois UPDATE).
         context.Attach(Hotel!).State = EntityState.Modified;
+        context.Entry(Hotel!.morada).State = EntityState.Modified;
 
         try
         {
@@ -98,6 +179,7 @@ else
         }
         catch (DbUpdateConcurrencyException)
         {
+            // Alguém apagou o registo entretanto?
             if (!HotelExists(Hotel!.Id))
             {
                 NavigationManager.NavigateTo("notfound");
@@ -107,8 +189,15 @@ else
                 throw;
             }
         }
+        catch (DbUpdateException)
+        {
+            // A base de dados recusou (índice único ou restrição CHECK).
+            erro = "Não foi possível gravar: a base de dados recusou os dados.";
+            return;
+        }
 
-        NavigationManager.NavigateTo("/hotels");
+        Mensagens.Sucesso("Unidade hoteleira alterada.");
+        NavigationManager.NavigateTo("/hoteis");
     }
 
     private bool HotelExists(int id)
