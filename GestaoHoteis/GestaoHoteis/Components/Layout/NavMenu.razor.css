@@ -120,16 +120,46 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 10 9-7 9 7M5 9v11h14V9M10 20v-6h4v6'/%3E%3C/svg%3E");
 }
 
-.bi-list-nested-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round'%3E%3Cpath d='M4 6h14M7 12h13M10 18h11'/%3E%3C/svg%3E");
+/* Um ícone por entrada do menu. Cada classe é usada num <span> do NavMenu.razor. */
+
+.bi-unidades-hoteleiras-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.875 21.125V4.875a2 2 0 0 1 2-2h10.25a2 2 0 0 1 2 2v16.25h-4.8v-4.2h-4.65v4.2Z'/%3E%3Cpath d='M8.15 6.5h1.3m5.1 0h1.3'/%3E%3Cpath d='M8.15 10h1.3m5.1 0h1.3'/%3E%3Cpath d='M8.15 13.5h1.3m5.1 0h1.3'/%3E%3C/svg%3E");
 }
 
-.bi-person-fill-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round'%3E%3Ccircle cx='12' cy='7.5' r='3.25'/%3E%3Cpath d='M5.5 20v-1.5a6.5 5 0 0 1 13 0V20'/%3E%3C/svg%3E");
+.bi-alojamentos-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 14.5V6.3a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8.2'/%3E%3Cpath d='M3 20.95V16.5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4.45M3 18.35h18'/%3E%3Cpath d='M7.9 11.3h8.2'/%3E%3C/svg%3E");
 }
 
-.bi-arrow-bar-left-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 5v14m5-7h9m-5-4-4 4 4 4'/%3E%3C/svg%3E");
+.bi-categorias-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 3.25h6.1a1.85 1.85 0 0 1 1.85 1.85v6.1l-8.85 8.85a2 2 0 0 1-2.83 0l-5.32-5.32a2 2 0 0 1 0-2.83Z'/%3E%3Ccircle cx='16.95' cy='7.25' r='1.25'/%3E%3C/svg%3E");
+}
+
+.bi-caracteristicas-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3.4 5.8 1.95 1.9 3.4-3.35m-5.35 7.7 1.95 1.9 3.4-3.35m-5.35 7.7 1.95 1.9 3.4-3.35'/%3E%3Cpath d='M12.2 6.05h8.45m-8.45 6.25h8.45m-8.45 6.25h8.45'/%3E%3C/svg%3E");
+}
+
+.bi-regimes-alimentares-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.7 3.4v5.5a3 3 0 0 0 6 0V3.4M6.7 3.4v17.2'/%3E%3Cpath d='M19.65 20.6V3.4a10.25 10.25 0 0 0-4.8 8.65v2.3h4.8'/%3E%3C/svg%3E");
+}
+
+.bi-disponibilizacao-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 7h4m5 0h8m-17 10h8m5 0h4'/%3E%3Ccircle cx='10' cy='7' r='2.5'/%3E%3Ccircle cx='14' cy='17' r='2.5'/%3E%3C/svg%3E");
+}
+
+.bi-campanhas-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.85 11.75v-5.9a1.9 1.9 0 0 0-1.9-1.9h-7.8L3.67 10.6a1.8 1.8 0 0 0 0 2.7l7.48 6.65h1.35'/%3E%3Ccircle cx='8.1' cy='11.95' r='1.3'/%3E%3Cpath d='m16.75 20.95 3.4-5.1'/%3E%3Ccircle cx='16.3' cy='16.45' r='0.42'/%3E%3Ccircle cx='20.55' cy='20.35' r='0.42'/%3E%3C/svg%3E");
+}
+
+.bi-gerir-reservas-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.7 5.55H5.95a2 2 0 0 0-2 2v11.4a2 2 0 0 0 2 2h6.55m2.8-15.4h2.75a2 2 0 0 1 2 2v5.6'/%3E%3Crect x='8.7' y='3.05' width='6.6' height='4.55' rx='1.3'/%3E%3Cpath d='M7.15 11.65h8.8m-8.8 3.5h4.1'/%3E%3Cpath d='m15.8 18.25 1.75 1.8 3.45-3.3'/%3E%3C/svg%3E");
+}
+
+.bi-gerir-utilizadores-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8.7' cy='7.95' r='3.12'/%3E%3Cpath d='M3.05 20.65V19.3a5.65 5.65 0 0 1 11.3 0v1.35'/%3E%3Cpath d='M15.55 5.9a2.65 2.65 0 1 1 .6 5.23m.78 3.05A4.8 4.8 0 0 1 21 18.92v1.73'/%3E%3C/svg%3E");
+}
+
+.bi-gerir-roles-nav-menu {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.8 12.35V7.2L12 3.5 3.2 7.2v5.15c0 3.76 3.55 6.6 8.8 8.55'/%3E%3Cpath d='m15.8 18.25 1.75 1.8 3.45-3.3'/%3E%3C/svg%3E");
 }
 
 @media (max-width: 640.98px) {
