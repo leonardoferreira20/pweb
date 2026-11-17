@@ -32,10 +32,13 @@ entity "ApplicationUser" as user <<IdentityUser>> {
   PhoneNumber : string
   ..
   * Nome : string
+  Apelido : string
+  Telemovel : string
+  NIF : long
+  MatriculaVeiculo : string
+  Fotografia : byte[]
   * Estado : EstadoUtilizador
   * DataRegisto : DateTime
-  NIF : string
-  MatriculaVeiculo : string
   MoradaId : int <<FK, UQ>>
 }
 
@@ -58,9 +61,10 @@ entity "Hotel" as hotel {
   * Tipo : TipoHotel
   * Estrelas : int
   * Descricao : string
+  UrlImagem : string
   * Imagem : byte[]
   * Ativo : bool
-  * MoradaId : int <<FK>>
+  * MoradaId : int <<FK, UQ>>
 }
 
 entity "Categoria" as categoria {
@@ -100,6 +104,7 @@ entity "Alojamento" as alojamento {
   * Capacidade : int
   * NumUnidades : int
   * PrecoNoite : decimal
+  UrlImagem : string
   * Imagem : byte[]
   * Ativo : bool
 }
@@ -171,7 +176,7 @@ entity "Fatura" as fatura {
   * Numero : int <<UQ>>
   * DataEmissao : DateTime
   * NomeCliente : string
-  * NIFCliente : string
+  * NIFCliente : long
 }
 
 ' ============ Enumerações ============
