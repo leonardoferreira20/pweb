@@ -44,6 +44,12 @@ public class CategoriaService(ICategoriaRepository categorias, IAlojamentoReposi
     // Criar (POST).
     public async Task<Resultado<CategoriaDto>> CreateAsync(CriarCategoriaDto dto)
     {
+        // O ícone carregado (extra do grupo), se vier, tem de ser uma imagem: a mesma
+        // verificação das imagens dos alojamentos (PNG, JPEG, GIF ou WebP, até 2 MB).
+        var erro = Imagens.Validar(dto.IconeImagem);
+        if (erro is not null)
+            return Resultado<CategoriaDto>.Invalido(erro.Codigo!, erro.Mensagem!);
+
         // Regra: nomes únicos. A base de dados também o garante (índice único),
         // mas assim a mensagem é clara e não se chega a tentar o INSERT.
         if (await categorias.NomeExisteAsync(dto.Nome))
@@ -65,6 +71,11 @@ public class CategoriaService(ICategoriaRepository categorias, IAlojamentoReposi
         var categoria = await categorias.GetByIdAsync(id);
         if (categoria is null)
             return Resultado.NaoEncontrado(CodigosErro.CategoriaNaoEncontrada, $"A categoria {id} não existe.");
+
+        // O ícone carregado (extra do grupo), se vier, tem de ser uma imagem.
+        var erro = Imagens.Validar(dto.IconeImagem);
+        if (erro is not null)
+            return erro;
 
         // 2. Regra: o novo nome não pode ser o de outra categoria.
         if (await categorias.NomeExisteAsync(dto.Nome, excetoId: id))

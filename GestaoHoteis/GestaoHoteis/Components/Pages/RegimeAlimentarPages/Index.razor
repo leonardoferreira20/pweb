@@ -28,6 +28,8 @@
 
 @* Items: a consulta que a QuickGrid executa. Por ordem alfabética do nome. *@
 <QuickGrid Class="table" Items="context.RegimesAlimentares.OrderBy(regime => regime.Nome)">
+    @* Ícone (extra do grupo): o componente partilhado Icone; sem ícone, mostra o genérico. *@
+    <TemplateColumn Context="regime"><Icone Grupo="@Icones.Regimes" Nome="@regime.Icone" Imagem="@regime.IconeImagem" /></TemplateColumn>
     <PropertyColumn Property="regime => regime.Nome" Title="Nome" />
     <PropertyColumn Property="regime => regime.Descricao" Title="Descrição" />
     <PropertyColumn Property="regime => regime.Percentagem" Title="Acréscimo" Format="N2" />

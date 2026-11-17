@@ -28,6 +28,8 @@
 
 @* Items: a consulta que a QuickGrid executa. Por ordem alfabética do nome. *@
 <QuickGrid Class="table" Items="context.Caracteristicas.OrderBy(caracteristica => caracteristica.Nome)">
+    @* Ícone (extra do grupo): o componente partilhado Icone; sem ícone, mostra o genérico. *@
+    <TemplateColumn Context="caracteristica"><Icone Grupo="@Icones.Caracteristicas" Nome="@caracteristica.Icone" Imagem="@caracteristica.IconeImagem" /></TemplateColumn>
     <PropertyColumn Property="caracteristica => caracteristica.Nome" Title="Nome" />
     <TemplateColumn Title="Ativa" Context="caracteristica">@(caracteristica.Ativo ? "Sim" : "Não")</TemplateColumn>
 

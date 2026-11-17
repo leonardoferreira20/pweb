@@ -17,6 +17,8 @@ public static class CategoriaMapper
         // "?? """: se o nome for null, usa texto vazio (o DTO não aceita null).
         Nome = c.Nome ?? "",
         Descricao = c.Descricao,
+        Icone = c.Icone,
+        IconeImagem = c.IconeImagem,
         Ativo = c.Ativo
     };
 
@@ -27,6 +29,9 @@ public static class CategoriaMapper
         Nome = d.Nome.Trim(),
         // Texto opcional: só espaços (ou nada) fica null; senão, sem os espaços nas pontas.
         Descricao = string.IsNullOrWhiteSpace(d.Descricao) ? null : d.Descricao.Trim(),
+        // Ícone (extra do grupo): um da lista (pelo nome) ou um carregado (os bytes), nunca os dois.
+        Icone = d.IconeImagem is not null || string.IsNullOrWhiteSpace(d.Icone) ? null : d.Icone.Trim(),
+        IconeImagem = d.IconeImagem,
         Ativo = d.Ativo
     };
 
@@ -36,6 +41,8 @@ public static class CategoriaMapper
     {
         c.Nome = d.Nome.Trim();
         c.Descricao = string.IsNullOrWhiteSpace(d.Descricao) ? null : d.Descricao.Trim();
+        c.Icone = d.IconeImagem is not null || string.IsNullOrWhiteSpace(d.Icone) ? null : d.Icone.Trim();
+        c.IconeImagem = d.IconeImagem;
         c.Ativo = d.Ativo;
     }
 }

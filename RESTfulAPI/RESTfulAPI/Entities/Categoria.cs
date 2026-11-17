@@ -20,6 +20,16 @@ public class Categoria
     [StringLength(200)]
     public string? Descricao { get; set; }
 
+    // Ícone (extra do grupo): o nome de um ficheiro de wwwroot/img/icones/categorias,
+    // sem a extensão (por exemplo "suite"). Opcional: sem ícone, mostra-se o genérico.
+    [StringLength(50)]
+    public string? Icone { get; set; }
+
+    // Ícone carregado (extra do grupo): uma imagem PNG ou JPEG própria, em vez de um dos
+    // ícones da lista, como a Imagem dos alojamentos. Quando existe, é esta que se mostra,
+    // e Icone fica a null.
+    public byte[]? IconeImagem { get; set; }
+
     // Uma categoria inativa não aparece na aplicação dos clientes.
     public bool Ativo { get; set; } = true;
 

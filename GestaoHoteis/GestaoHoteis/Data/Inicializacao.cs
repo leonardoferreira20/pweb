@@ -86,26 +86,27 @@ public static class Inicializacao
         context.ModosDisponibilizacao.AddRange(listagem, reserva);
 
         // Regimes alimentares, com o acréscimo sobre o preço por noite.
-        var semRefeicoes = new RegimeAlimentar { Nome = "Sem refeições", Descricao = "Só alojamento", Percentagem = 0 };
-        var pequenoAlmoco = new RegimeAlimentar { Nome = "Pequeno-almoço", Descricao = "Alojamento e pequeno-almoço", Percentagem = 10 };
-        var meiaPensao = new RegimeAlimentar { Nome = "Meia pensão", Descricao = "Pequeno-almoço e jantar", Percentagem = 30 };
-        var pensaoCompleta = new RegimeAlimentar { Nome = "Pensão completa", Descricao = "Pequeno-almoço, almoço e jantar", Percentagem = 45 };
+        // Icone (extra do grupo): o nome do ficheiro em wwwroot/img/icones, sem a extensão.
+        var semRefeicoes = new RegimeAlimentar { Nome = "Sem refeições", Descricao = "Só alojamento", Percentagem = 0, Icone = "sem-refeicoes" };
+        var pequenoAlmoco = new RegimeAlimentar { Nome = "Pequeno-almoço", Descricao = "Alojamento e pequeno-almoço", Percentagem = 10, Icone = "pequeno-almoco" };
+        var meiaPensao = new RegimeAlimentar { Nome = "Meia pensão", Descricao = "Pequeno-almoço e jantar", Percentagem = 30, Icone = "meia-pensao" };
+        var pensaoCompleta = new RegimeAlimentar { Nome = "Pensão completa", Descricao = "Pequeno-almoço, almoço e jantar", Percentagem = 45, Icone = "pensao-completa" };
         context.RegimesAlimentares.AddRange(semRefeicoes, pequenoAlmoco, meiaPensao, pensaoCompleta);
 
         // Categorias (tipologias).
-        var individual = new Categoria { Nome = "Quarto Individual", Descricao = "Quarto para uma pessoa" };
-        var duplo = new Categoria { Nome = "Quarto Duplo", Descricao = "Quarto para duas pessoas" };
-        var suite = new Categoria { Nome = "Suite", Descricao = "Quarto com zona de estar" };
-        var t1 = new Categoria { Nome = "Apartamento T1", Descricao = "Apartamento com um quarto e kitchenette" };
+        var individual = new Categoria { Nome = "Quarto Individual", Descricao = "Quarto para uma pessoa", Icone = "quarto-individual" };
+        var duplo = new Categoria { Nome = "Quarto Duplo", Descricao = "Quarto para duas pessoas", Icone = "quarto-duplo" };
+        var suite = new Categoria { Nome = "Suite", Descricao = "Quarto com zona de estar", Icone = "suite" };
+        var t1 = new Categoria { Nome = "Apartamento T1", Descricao = "Apartamento com um quarto e kitchenette", Icone = "apartamento" };
         context.Categorias.AddRange(individual, duplo, suite, t1);
 
         // Características.
-        var wifi = new Caracteristica { Nome = "Wi-Fi" };
-        var ac = new Caracteristica { Nome = "Ar condicionado" };
-        var varanda = new Caracteristica { Nome = "Varanda" };
-        var vistaMar = new Caracteristica { Nome = "Vista mar" };
-        var kitchenette = new Caracteristica { Nome = "Kitchenette" };
-        var banheira = new Caracteristica { Nome = "Banheira" };
+        var wifi = new Caracteristica { Nome = "Wi-Fi", Icone = "wifi" };
+        var ac = new Caracteristica { Nome = "Ar condicionado", Icone = "ar-condicionado" };
+        var varanda = new Caracteristica { Nome = "Varanda", Icone = "varanda" };
+        var vistaMar = new Caracteristica { Nome = "Vista mar", Icone = "vista-mar" };
+        var kitchenette = new Caracteristica { Nome = "Kitchenette", Icone = "kitchenette" };
+        var banheira = new Caracteristica { Nome = "Banheira", Icone = "banheira" };
         context.Caracteristicas.AddRange(wifi, ac, varanda, vistaMar, kitchenette, banheira);
 
         // Unidades hoteleiras, cada uma com a sua morada (um objeto Morada novo para cada).

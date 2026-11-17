@@ -1,0 +1,47 @@
+/* A grelha de ícones do componente EscolheIcone (extra do grupo).
+   As cores vêm das variáveis do app.css (alínea 4.d, passo 7). */
+.escolhe-icone {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
+    gap: .5rem;
+}
+
+.opcao {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    padding: .55rem .35rem;
+    border: 1px solid var(--cor-divisoria);
+    border-radius: .6rem;
+    background: var(--cor-superficie);
+    color: var(--cor-texto);
+    font-size: .8rem;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* object-fit: contain: um ícone carregado que não seja quadrado não fica deformado. */
+.opcao img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.opcao:hover {
+    background: var(--cor-realce);
+}
+
+/* O ícone escolhido: contorno verde e fundo realçado. */
+.opcao.escolhida {
+    border-color: var(--cor-primaria);
+    background: var(--cor-realce);
+    box-shadow: inset 0 0 0 1px var(--cor-primaria);
+    font-weight: 600;
+}
+
+.opcao:focus-visible {
+    outline: 2px solid var(--cor-primaria);
+    outline-offset: 2px;
+}

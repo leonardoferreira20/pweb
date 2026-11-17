@@ -68,6 +68,8 @@ entity "Categoria" as categoria {
   --
   * Nome : string
   Descricao : string
+  Icone : string
+  IconeImagem : byte[]
   * Ativo : bool
 }
 
@@ -82,6 +84,8 @@ entity "Caracteristica" as caracteristica {
   * Id : int <<PK>>
   --
   * Nome : string
+  Icone : string
+  IconeImagem : byte[]
   * Ativo : bool
 }
 
@@ -106,6 +110,8 @@ entity "RegimeAlimentar" as regime {
   * Nome : string
   Descricao : string
   * Percentagem : decimal
+  Icone : string
+  IconeImagem : byte[]
   * Ativo : bool
 }
 

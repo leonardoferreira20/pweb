@@ -1,0 +1,20 @@
+@* Mostra o ícone de uma categoria, característica ou regime alimentar (extra do grupo).
+   Usa-se assim: <Icone Grupo="@Icones.Categorias" Nome="@categoria.Icone" Imagem="@categoria.IconeImagem" />
+   Se o item tem um ícone carregado (Imagem), mostra-o; senão, o ícone da lista com esse nome;
+   sem nenhum dos dois, o genérico do grupo.
+   alt="": o nome do item já está escrito ao lado; o ícone é só decoração. *@
+<img src="@Icones.Src(Grupo, Nome, Imagem)" alt="" style="width:@(Tamanho)px;height:@(Tamanho)px;object-fit:contain" />
+
+@code {
+    // A pasta do ícone: Icones.Categorias, Icones.Caracteristicas ou Icones.Regimes.
+    [Parameter, EditorRequired] public string Grupo { get; set; } = "";
+
+    // O valor da coluna Icone (por exemplo "wifi"). Pode ser null.
+    [Parameter] public string? Nome { get; set; }
+
+    // O valor da coluna IconeImagem: o ícone carregado, ou null.
+    [Parameter] public byte[]? Imagem { get; set; }
+
+    // Largura e altura, em píxeis.
+    [Parameter] public int Tamanho { get; set; } = 28;
+}

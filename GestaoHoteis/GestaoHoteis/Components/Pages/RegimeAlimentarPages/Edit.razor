@@ -45,6 +45,12 @@ else
                     <ValidationMessage For="() => RegimeAlimentar.Descricao" class="text-danger" />
                 </div>
                 <div class="mb-3">
+                    @* Ícone (extra do grupo): uma grelha de ícones, o componente partilhado EscolheIcone.
+                       @bind-Valor liga-a à propriedade Icone, como o @bind-Value dos outros campos. *@
+                    <label class="form-label">Ícone:</label>
+                    <EscolheIcone Grupo="@Icones.Regimes" @bind-Valor="RegimeAlimentar.Icone" @bind-Imagem="RegimeAlimentar.IconeImagem" />
+                </div>
+                <div class="mb-3">
                     <label for="percentagem" class="form-label">Acréscimo sobre o preço por noite (%):</label>
                     <InputNumber id="percentagem" @bind-Value="RegimeAlimentar.Percentagem" class="form-control" />
                     <ValidationMessage For="() => RegimeAlimentar.Percentagem" class="text-danger" />

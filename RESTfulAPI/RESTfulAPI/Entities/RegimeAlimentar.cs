@@ -27,6 +27,16 @@ public class RegimeAlimentar
     [Range(0, 999.99, ErrorMessage = "A percentagem tem de estar entre 0 e 999,99.")]
     public decimal Percentagem { get; set; }
 
+    // Ícone (extra do grupo): o nome de um ficheiro de wwwroot/img/icones/regimes,
+    // sem a extensão (por exemplo "pequeno-almoco"). Opcional: sem ícone, mostra-se o genérico.
+    [StringLength(50)]
+    public string? Icone { get; set; }
+
+    // Ícone carregado (extra do grupo): uma imagem PNG ou JPEG própria, em vez de um dos
+    // ícones da lista, como a Imagem dos alojamentos. Quando existe, é esta que se mostra,
+    // e Icone fica a null.
+    public byte[]? IconeImagem { get; set; }
+
     // Um regime inativo não pode ser escolhido em novas reservas.
     public bool Ativo { get; set; } = true;
 

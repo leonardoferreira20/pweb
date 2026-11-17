@@ -23,6 +23,19 @@ public class CriarCategoriaDto
     [StringLength(200, ErrorMessage = "A descrição tem no máximo 200 caracteres.")]
     public string? Descricao { get; set; }
 
+    // Extra do grupo: opcional, até 50 caracteres; só letras minúsculas, algarismos e hífenes
+    // (é o nome de um ficheiro). Um nome que a app não conheça mostra o ícone genérico.
+    /// <summary>O nome do ícone (opcional), por exemplo "apartamento". Sem ícone, a app mostra o genérico.</summary>
+    /// <example>apartamento</example>
+    [StringLength(50, ErrorMessage = "O ícone tem no máximo 50 caracteres.")]
+    [RegularExpression("^[a-z0-9-]+$", ErrorMessage = "O ícone só pode ter letras minúsculas, algarismos e hífenes.")]
+    public string? Icone { get; set; }
+
+    // Extra do grupo: em vez de um ícone da lista, um ícone próprio, em Base64 (opcional).
+    // Se vier, o "icone" é ignorado. Que é PNG, JPEG, GIF ou WebP, até 2 MB, verifica-o o Service.
+    /// <summary>Um ícone próprio (PNG, JPEG, GIF ou WebP, até 2 MB) em Base64, opcional. Se vier, o "icone" é ignorado.</summary>
+    public byte[]? IconeImagem { get; set; }
+
     // Se não vier no JSON, fica true: uma categoria nova começa ativa, como na Gestão de Hotéis.
     /// <summary>Está ativa? Se não vier, fica true.</summary>
     /// <example>true</example>

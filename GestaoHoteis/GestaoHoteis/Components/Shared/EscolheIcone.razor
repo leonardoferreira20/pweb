@@ -1,0 +1,81 @@
+@* Para escolher o ícone de uma categoria, característica ou regime alimentar (extra do grupo):
+   um dos ícones da lista, numa grelha, ou um ícone novo, carregado do computador.
+   Usa-se dentro de um EditForm, como um campo:
+   <EscolheIcone Grupo="@Icones.Categorias" @bind-Valor="Categoria.Icone" @bind-Imagem="Categoria.IconeImagem" />
+   Cada @bind-X liga-o a uma propriedade nos dois sentidos, como o @bind-Value de um InputText:
+   o componente recebe o valor em X e avisa a página de cada mudança com XChanged.
+   Fica sempre só um dos dois: escolher da lista apaga o carregado, e carregar apaga o da lista. *@
+@inject IImagensService Imagens
+
+<div class="escolhe-icone" role="radiogroup" aria-label="Ícone">
+    @if (Imagem is not null)
+    {
+        @* O ícone carregado: aparece primeiro, já escolhido. *@
+        <button type="button" role="radio" aria-checked="true" class="opcao escolhida" title="Ícone carregado">
+            <img src="@Icones.Src(Grupo, null, Imagem)" alt="" />
+            <span>Carregado</span>
+        </button>
+    }
+    @foreach (var icone in Icones.Lista[Grupo])
+    {
+        var escolhido = Imagem is null && icone.Nome == (Valor ?? Icones.Lista[Grupo][0].Nome);
+        @* type="button": um clique escolhe o ícone, e não envia o formulário. *@
+        <button type="button" role="radio" aria-checked="@(escolhido ? "true" : "false")"
+                class="opcao @(escolhido ? "escolhida" : "")" title="@icone.Texto"
+                @onclick="() => Escolhe(icone.Nome)">
+            <img src="@Icones.Src(Grupo, icone.Nome)" alt="" />
+            <span>@icone.Texto</span>
+        </button>
+    }
+</div>
+
+@* Ou um ícone novo: o mesmo InputFile das imagens dos alojamentos (alínea 4.k);
+   o serviço de imagens confirma a extensão e o tamanho, e lê os bytes. *@
+<div class="mt-2">
+    <label for="icone-@Grupo" class="form-label small mb-1">Ou carregar um ícone novo (.png ou .jpg, de preferência quadrado e com fundo transparente):</label>
+    <InputFile id="@($"icone-{Grupo}")" OnChange="CarregaIcone" accept=".png,.jpg,.jpeg" class="form-control form-control-sm" />
+    <div class="text-danger">@erro</div>
+</div>
+
+@code {
+    // A pasta dos ícones: Icones.Categorias, Icones.Caracteristicas ou Icones.Regimes.
+    [Parameter, EditorRequired] public string Grupo { get; set; } = "";
+
+    // O ícone da lista escolhido (coluna Icone). null conta como o genérico (o primeiro da lista).
+    [Parameter] public string? Valor { get; set; }
+
+    // Os nomes têm de ser os dos parâmetros seguidos de Changed, para o @bind-Valor
+    // e o @bind-Imagem funcionarem.
+    [Parameter] public EventCallback<string?> ValorChanged { get; set; }
+
+    // O ícone carregado (coluna IconeImagem), ou null.
+    [Parameter] public byte[]? Imagem { get; set; }
+    [Parameter] public EventCallback<byte[]?> ImagemChanged { get; set; }
+
+    // A mensagem de erro do último ficheiro escolhido (extensão ou tamanho).
+    private string? erro;
+
+    // Um ícone da lista: fica o nome, e sai o carregado. O genérico guarda-se como null.
+    private async Task Escolhe(string nome)
+    {
+        erro = null;
+        await ImagemChanged.InvokeAsync(null);
+        await ValorChanged.InvokeAsync(nome == Icones.Lista[Grupo][0].Nome ? null : nome);
+    }
+
+    // Um ficheiro novo: fica a imagem, e sai o nome do ícone da lista.
+    private async Task CarregaIcone(InputFileChangeEventArgs e)
+    {
+        erro = Imagens.Valida(e.File.Name, e.File.Size);
+        if (erro is not null)
+        {
+            return;
+        }
+
+        // O ficheiro chega do browser como IBrowserFile; o serviço só precisa do conteúdo (um Stream).
+        await using var conteudo = e.File.OpenReadStream(Imagens.TamanhoMaximo);
+        var bytes = await Imagens.LerBytesAsync(conteudo);
+        await ValorChanged.InvokeAsync(null);
+        await ImagemChanged.InvokeAsync(bytes);
+    }
+}

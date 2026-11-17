@@ -15,6 +15,8 @@ public static class CatalogoMapper
         Nome = r.Nome ?? "",
         Descricao = r.Descricao,
         Percentagem = r.Percentagem,
+        Icone = r.Icone,
+        IconeImagem = r.IconeImagem,
         Ativo = r.Ativo
     };
 
@@ -23,6 +25,8 @@ public static class CatalogoMapper
     {
         Id = c.Id,
         Nome = c.Nome ?? "",
+        Icone = c.Icone,
+        IconeImagem = c.IconeImagem,
         Ativo = c.Ativo
     };
 }

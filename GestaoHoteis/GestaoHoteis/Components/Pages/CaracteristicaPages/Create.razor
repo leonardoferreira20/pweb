@@ -33,6 +33,12 @@
                 <InputText id="nome" @bind-Value="Caracteristica.Nome" class="form-control" />
                 <ValidationMessage For="() => Caracteristica.Nome" class="text-danger" />
             </div>
+            <div class="mb-3">
+                @* Ícone (extra do grupo): uma grelha de ícones, o componente partilhado EscolheIcone.
+                   @bind-Valor liga-a à propriedade Icone, como o @bind-Value dos outros campos. *@
+                <label class="form-label">Ícone:</label>
+                <EscolheIcone Grupo="@Icones.Caracteristicas" @bind-Valor="Caracteristica.Icone" @bind-Imagem="Caracteristica.IconeImagem" />
+            </div>
             <div class="mb-3 form-check">
                 <InputCheckbox id="ativo" @bind-Value="Caracteristica.Ativo" class="form-check-input" />
                 <label for="ativo" class="form-check-label">Ativa</label>
