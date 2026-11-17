@@ -23,7 +23,11 @@
            cada página) andam juntos: sem sessão, ou só com o role Cliente, o menu fica
            apenas com "Gestão de Hotéis". *@
         <AuthorizeView Roles="Administrador,Funcionario">
-            @* As sete listagens. Cada href é o @page de uma página Index. *@
+            @* As entradas estão arrumadas em secções, cada uma com um título (.nav-section).
+               Cada href é o @page de uma página Index. *@
+
+            @* Oferta: o que a empresa tem para reservar. *@
+            <div class="nav-section">Oferta</div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="hoteis">
                     <span class="bi bi-unidades-hoteleiras-nav-menu" aria-hidden="true"></span> Unidades hoteleiras
@@ -36,6 +40,8 @@
                 </NavLink>
             </div>
 
+            @* Classificação: as listas que descrevem cada alojamento. *@
+            <div class="nav-section">Classificação</div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="categorias">
                     <span class="bi bi-categorias-nav-menu" aria-hidden="true"></span> Categorias
@@ -60,6 +66,8 @@
                 </NavLink>
             </div>
 
+            @* Comercial: os preços por período e as reservas dos clientes. *@
+            <div class="nav-section">Comercial</div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="campanhas">
                     <span class="bi bi-campanhas-nav-menu" aria-hidden="true"></span> Campanhas
@@ -79,8 +87,10 @@
 <div class="bottom-row">
     <nav class="flex-column">
         @* AuthorizeView COM Roles: só o Administrador gere utilizadores e roles.
-           Estas duas páginas também ainda não existem. *@
+           Estas duas páginas também ainda não existem. O título fica dentro do
+           AuthorizeView: o funcionário não vê uma secção vazia. *@
         <AuthorizeView Roles="Administrador">
+            <div class="nav-section">Administração</div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="Account/GereUser">
                     <span class="bi bi-gerir-utilizadores-nav-menu" aria-hidden="true"></span> Gerir Utilizadores

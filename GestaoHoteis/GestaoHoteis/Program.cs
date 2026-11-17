@@ -117,6 +117,11 @@ using (var scope = app.Services.CreateScope())
         // As imagens vêm de wwwroot/img/seed; WebRootPath é o caminho da pasta wwwroot.
         await Inicializacao.CriaDadosExemplo(context,
             Path.Combine(app.Environment.WebRootPath, "img", "seed"));
+
+        // Extra do grupo: mais dados de demonstração (20 unidades, 30 alojamentos, ...).
+        // Só corre uma vez, e depois dos dados de exemplo, de que precisa.
+        await Inicializacao.CriaDadosDemonstracao(context,
+            Path.Combine(app.Environment.WebRootPath, "img", "seed"));
     }
     catch (Exception)
     {

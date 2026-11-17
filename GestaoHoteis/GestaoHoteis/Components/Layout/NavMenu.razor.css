@@ -74,6 +74,23 @@
     padding-inline: clamp(.65rem, 1.4vw, 1rem) !important;
 }
 
+/* Títulos das secções do menu (Oferta, Classificação, Comercial, Administração):
+   texto pequeno, em maiúsculas e a dourado, alinhado com o texto das entradas. */
+.nav-section {
+    padding: 1rem calc(clamp(.65rem, 1.4vw, 1rem) + .65rem) .3rem;
+    color: var(--cor-dourado);
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+/* Na zona de baixo, o título fica mais perto da linha de separação. */
+.bottom-row .nav-section {
+    padding-top: .35rem;
+}
+
 .nav-item ::deep .nav-link {
     display: flex;
     min-height: 2.75rem;
