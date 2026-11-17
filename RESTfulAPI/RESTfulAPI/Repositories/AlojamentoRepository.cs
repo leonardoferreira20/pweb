@@ -7,7 +7,7 @@ namespace RESTfulAPI.Repositories;
 // O acesso à tabela Alojamentos: cumpre o IAlojamentoRepository.
 // Diferença para os outros: os alojamentos vêm sempre com as três referências e as duas
 // coleções N-M (Include), porque o AlojamentoMapper.ToDto precisa delas.
-public class AlojamentoRepository(AppDbContext context) : IAlojamentoRepository
+public class AlojamentoRepository(AppDbContext context, ILogger<AlojamentoRepository> logger) : IAlojamentoRepository
 {
     // A lista, com filtros opcionais (null = sem esse filtro).
     public async Task<List<Alojamento>> GetAllAsync(int? hotelId, int? categoriaId, int? estrelas, string? localidade, string? pesquisa)
@@ -98,8 +98,11 @@ public class AlojamentoRepository(AppDbContext context) : IAlojamentoRepository
             await context.SaveChangesAsync();
             return true;
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            // A exceção não sobe (o Service decide o que dizer à app), mas fica registada
+            // no log, com o erro do SQL Server: sem isto, perdia-se a causa.
+            logger.LogWarning(ex, "A base de dados recusou a gravação.");
             return false;
         }
     }

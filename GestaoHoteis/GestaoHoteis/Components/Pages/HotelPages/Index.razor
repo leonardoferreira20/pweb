@@ -106,10 +106,15 @@
         hoteis = consulta.OrderBy(h => h.Nome);
     }
 
+    // A ordem conta. VoltaAoInicio faz a QuickGrid consultar a base de dados e, enquanto
+    // espera pela resposta, o Blazor redesenha a página. Se a consulta já tivesse mudado,
+    // a QuickGrid lançava uma segunda consulta no mesmo contexto, ao mesmo tempo, e o EF Core
+    // recusa ("A second operation was started on this context instance"). Assim, primeiro
+    // volta-se à página 1 e só depois se muda a consulta: as duas leituras ficam seguidas.
     private async Task AplicaPesquisa()
     {
-        MontaConsulta();
         await VoltaAoInicio();
+        MontaConsulta();
     }
 
     // Volta à primeira página (a página atual pode deixar de existir).

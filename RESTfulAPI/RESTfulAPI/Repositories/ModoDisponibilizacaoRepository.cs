@@ -6,7 +6,7 @@ namespace RESTfulAPI.Repositories;
 
 // O acesso à tabela ModosDisponibilizacao: cumpre o IModoDisponibilizacaoRepository.
 // O mesmo desenho do CategoriaRepository; o AppDbContext chega pelo construtor primário.
-public class ModoDisponibilizacaoRepository(AppDbContext context) : IModoDisponibilizacaoRepository
+public class ModoDisponibilizacaoRepository(AppDbContext context, ILogger<ModoDisponibilizacaoRepository> logger) : IModoDisponibilizacaoRepository
 {
     // Listagem só para ler: AsNoTracking, ordenada por nome.
     public Task<List<ModoDisponibilizacao>> GetAllAsync() =>
@@ -55,8 +55,11 @@ public class ModoDisponibilizacaoRepository(AppDbContext context) : IModoDisponi
             await context.SaveChangesAsync();
             return true;
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            // A exceção não sobe (o Service decide o que dizer à app), mas fica registada
+            // no log, com o erro do SQL Server: sem isto, perdia-se a causa.
+            logger.LogWarning(ex, "A base de dados recusou a gravação.");
             return false;
         }
     }

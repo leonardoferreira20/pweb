@@ -93,8 +93,16 @@ public static class ErrosApi
         // Extensions: campos a mais no JSON do erro, além dos do ProblemDetails.
         pd.Extensions["codigo"] = codigo;
 
-        // O traceId identifica o pedido: quem vê o erro na app pode indicá-lo a quem dá suporte.
-        pd.Extensions["traceId"] = contexto.HttpContext.TraceIdentifier;
+        // O traceId identifica o pedido. Vai na resposta e no log: quem vê o erro na app
+        // diz o traceId, e encontra-se a linha certa na consola da API.
+        var traceId = contexto.HttpContext.TraceIdentifier;
+        pd.Extensions["traceId"] = traceId;
+
+        var logger = contexto.HttpContext.RequestServices
+            .GetRequiredService<ILoggerFactory>().CreateLogger("RESTfulAPI.Erros");
+        logger.LogInformation("Erro {Status} {Codigo} em {Metodo} {Caminho} (traceId {TraceId}): {Detalhe}",
+            status, pd.Extensions["codigo"], contexto.HttpContext.Request.Method,
+            contexto.HttpContext.Request.Path, traceId, pd.Detail);
     }
 
     // A mensagem para um campo com o tipo errado, conforme o tipo que o DTO esperava.

@@ -15,7 +15,8 @@ public class AlojamentoService(
     ICategoriaRepository categorias,
     IModoDisponibilizacaoRepository modos,
     IRegimeAlimentarRepository regimes,
-    ICaracteristicaRepository caracteristicas) : IAlojamentoService
+    ICaracteristicaRepository caracteristicas,
+    ILogger<AlojamentoService> logger) : IAlojamentoService
 {
     // A lista, com os filtros que vierem do URL, convertida em DTOs.
     public async Task<List<AlojamentoDto>> GetAllAsync(int? hotelId, int? categoriaId, int? estrelas, string? localidade, string? pesquisa)
@@ -63,6 +64,9 @@ public class AlojamentoService(
         if (!await alojamentos.AddAsync(alojamento))            // INSERT; o EF preenche alojamento.Id
             return Resultado<AlojamentoDto>.Conflito(CodigosErro.GravacaoRecusada, "A base de dados recusou o alojamento.");
 
+        // Registo no log: {Id} e {Nome} ficam como campos, e não só como texto.
+        logger.LogInformation("Alojamento {Id} criado: {Nome}", alojamento.Id, alojamento.Nome);
+
         // Ler outra vez, com a unidade, a categoria e o modo (os Include), para o DTO os ter com o nome.
         var criado = await alojamentos.GetByIdAsync(alojamento.Id);
         return Resultado<AlojamentoDto>.Ok(criado!.ToDto());
@@ -104,6 +108,7 @@ public class AlojamentoService(
         if (!await alojamentos.UpdateAsync(alojamento))         // UPDATE, e as tabelas de ligação
             return Resultado.Conflito(CodigosErro.GravacaoRecusada, "A base de dados recusou a alteração.");
 
+        logger.LogInformation("Alojamento {Id} alterado", id);
         return Resultado.Ok();
     }
 
@@ -121,6 +126,7 @@ public class AlojamentoService(
         if (!await alojamentos.DeleteAsync(alojamento))
             return Resultado.Conflito(CodigosErro.GravacaoRecusada, "A base de dados recusou apagar o alojamento.");
 
+        logger.LogInformation("Alojamento {Id} apagado", id);
         return Resultado.Ok();
     }
 

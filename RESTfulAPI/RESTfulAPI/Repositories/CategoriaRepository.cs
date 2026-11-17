@@ -8,7 +8,7 @@ namespace RESTfulAPI.Repositories;
 // O que está entre parênteses no nome da classe é o construtor primário: o ASP.NET Core
 // cria o repository e passa-lhe o AppDbContext (injeção de dependências, registada no Program.cs).
 // Cada método é uma consulta LINQ, que o EF Core traduz em SQL.
-public class CategoriaRepository(AppDbContext context) : ICategoriaRepository
+public class CategoriaRepository(AppDbContext context, ILogger<CategoriaRepository> logger) : ICategoriaRepository
 {
     // Listagem: só as ativas (RN17), por nome. AsNoTracking, porque é só para ler
     // (o EF Core não guarda cópias, é mais leve).
@@ -67,8 +67,11 @@ public class CategoriaRepository(AppDbContext context) : ICategoriaRepository
             await context.SaveChangesAsync();
             return true;
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            // A exceção não sobe (o Service decide o que dizer à app), mas fica registada
+            // no log, com o erro do SQL Server: sem isto, perdia-se a causa.
+            logger.LogWarning(ex, "A base de dados recusou a gravação.");
             return false;
         }
     }
